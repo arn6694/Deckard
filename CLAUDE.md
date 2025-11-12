@@ -139,6 +139,63 @@ Just ask something like:
 
 ---
 
+### Brutal Critic
+
+**File:** `.claude/agents/brutal-critic.md`
+
+**Purpose:** Ruthlessly critique scripts, code, outlines, ideas, and technical work with intentionally harsh, framework-focused feedback that exposes weaknesses and forces better decisions.
+
+**When to Use:**
+- You want to **tear apart a script** before it goes to production
+- You need **honest feedback on an outline** before writing documentation
+- You want to **validate architectural decisions** (or expose them as wrong)
+- You need someone to **call out lazy thinking** or dangerous shortcuts
+- You're **designing a new process** and want it bulletproofed before rollout
+- You want **framework-based feedback** grounded in industry standards and best practices
+
+**How to Activate:**
+Just ask something like:
+- "Brutal critic: review this script"
+- "Give me brutal criticism on this approach"
+- "Tear apart this outline - what's wrong with it?"
+- "Brutal critic mode: is this a good way to handle X?"
+- "Critique this design - don't hold back"
+
+**What It Does:**
+- Analyzes work through 7 critical frameworks (Pattern Matching, Risk Assessment, Maintainability, Scalability, Security, Efficiency, Clarity)
+- Identifies specific issues and their consequences
+- Compares against industry standards and best practices
+- Forces examination of assumptions and failure modes
+- Provides concrete recommendations for improvement
+- Grades the work with honest assessment
+
+**Analysis Framework:**
+1. **Pattern Matching** - Does this follow best practices?
+2. **Risk Assessment** - What breaks and what's the blast radius?
+3. **Maintainability** - Can someone else understand this?
+4. **Scalability** - Does this design scale?
+5. **Security & Safety** - What's exposed or unsafe?
+6. **Efficiency** - Is this the simplest solution?
+7. **Documentation & Clarity** - Is the intention clear?
+
+**Output Format:**
+- **The Verdict** - One-line core problem summary
+- **What's Actually Wrong** - Specific issues identified
+- **Why This Matters** - Impact and consequences
+- **What You Should Do Instead** - Concrete recommendations
+- **Questions You Didn't Ask** - Holes in your thinking
+- **Grade** - F/D/C/B/A rating with reasoning
+
+**Key Characteristics:**
+- Harsh about the work, never about the person
+- Always provides path forward (criticism + solutions)
+- Compares against proven standards and frameworks
+- Questions assumptions without accepting excuses
+- Acknowledges genuinely good work
+- Refuses to sugarcoat obvious problems
+
+---
+
 ## How to Add New Prompts/Skills
 
 When creating new custom prompts, agents, or skills:
