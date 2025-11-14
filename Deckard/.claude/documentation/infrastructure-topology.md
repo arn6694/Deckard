@@ -75,11 +75,14 @@
 - **Default Upstream DNS**: Can fall back to public DNS if needed
 
 #### Pi-hole Secondary
-- **IP**: 10.10.10.23
-- **Hosted On**: Zeus Docker (external system)
-- **Role**: Redundant Pi-hole instance
-- **Receives Config**: Synchronized from primary
-- **Failover**: Provides DNS filtering if primary is down
+- **IP**: 10.10.10.25
+- **Hosted On**: pi5 (Raspberry Pi 5)
+- **Role**: Redundant Pi-hole instance, secondary DNS filtering
+- **OS**: Debian 13 (Trixie) aarch64
+- **Web UI**: http://10.10.10.25/admin/
+- **Configuration**: Synchronized from primary
+- **Failover**: Provides DNS filtering if primary (10.10.10.22) is down
+- **Status**: Operational as of November 14, 2025
 
 ---
 
@@ -165,7 +168,7 @@
 | Home Assistant | 10.10.10.6 | Automation | Web UI |
 | Proxmox | 10.10.10.17 | Hypervisor | Web UI/SSH |
 | Pi-hole Primary | 10.10.10.22 | DNS Filter | API/Web UI |
-| Pi-hole Secondary | 10.10.10.23 | DNS Filter | API/Web UI |
+| **Pi-hole Secondary** | **10.10.10.25** | **DNS Filter (Failover)** | **Web UI/SSH (pi5)** |
 | Jarvis | 10.10.10.49 | AI Backend | API/OpenWebUI |
 
 ---
@@ -291,5 +294,15 @@ Critical Chain:
 
 ---
 
-**Last Updated**: November 13, 2025
-**Status**: Phase 1 Documentation Complete
+## Recent Updates
+
+- **November 14, 2025**: Pi-hole Secondary (pihole2) migrated from Zeus Docker (10.10.10.23) to pi5 (10.10.10.25)
+  - New hardware: Raspberry Pi 5 with Debian 13 (aarch64)
+  - Web UI now at http://10.10.10.25/admin/
+  - DNS fully operational on port 53 with all local configurations
+  - Provides DNS failover if primary pihole (10.10.10.22) becomes unavailable
+
+---
+
+**Last Updated**: November 14, 2025
+**Status**: Phase 1 Complete - pihole2 migration complete
