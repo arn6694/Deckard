@@ -161,7 +161,51 @@ ssh brian@TARGET_IP "sudo rpm -i /tmp/check-mk-agent-VERSION-1.noarch.rpm && ech
 
 ---
 
-## Step 4: Verify Agent is Running
+## Step 4: Open Firewall Port 6556 (CRITICAL!)
+
+**IMPORTANT:** Port 6556 must be open on the target host for Checkmk to communicate with the agent. Many Linux distributions have firewalls enabled by default.
+
+### For systems using firewalld (RHEL, CentOS, Oracle Linux):
+
+```bash
+ssh brian@TARGET_IP "sudo firewall-cmd --permanent --add-port=6556/tcp && sudo firewall-cmd --reload && echo 'Port 6556 opened'"
+```
+
+**Verify the rule is active:**
+```bash
+ssh brian@TARGET_IP "sudo firewall-cmd --list-all | grep 6556"
+```
+
+Should show: `ports: 6556/tcp`
+
+### For systems using iptables (older Debian/Ubuntu):
+
+```bash
+ssh brian@TARGET_IP "sudo iptables -A INPUT -p tcp --dport 6556 -j ACCEPT"
+ssh brian@TARGET_IP "sudo iptables-save > /etc/iptables/rules.v4"
+```
+
+**Verify the rule:**
+```bash
+ssh brian@TARGET_IP "sudo iptables -L -n | grep 6556"
+```
+
+### Test connectivity from Checkmk server:
+
+```bash
+ssh brian@10.10.10.5 "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/TARGET_IP/6556' && echo 'Port 6556 is REACHABLE' || echo 'Port 6556 is BLOCKED'"
+```
+
+**Expected output:** `Port 6556 is REACHABLE`
+
+If still blocked:
+- Check for cloud firewalls/security groups
+- Check host-based firewall status: `sudo systemctl status firewalld` or `sudo systemctl status iptables`
+- Check SELinux rules if present: `sudo getenforce`
+
+---
+
+## Step 5: Verify Agent is Running and Accessible
 
 ```bash
 ssh brian@TARGET_IP "sudo /usr/bin/check_mk_agent | head -20"
@@ -181,9 +225,16 @@ Hostname: ansible
 - No errors in output ✓
 - Hostname is correct ✓
 
+**Also verify from Checkmk server:**
+```bash
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -d TARGET_HOSTNAME' 2>&1 | head -20"
+```
+
+Should show agent output (not a connection error).
+
 ---
 
-## Step 5: Add Host to Checkmk Configuration
+## Step 6: Add Host to Checkmk Configuration
 
 Create a Python script to add the host to Checkmk:
 
@@ -237,7 +288,7 @@ ssh brian@10.10.10.5 "sudo su - monitoring -c 'python3 /tmp/add_host.py'"
 
 ---
 
-## Step 6: Verify Host in Monitoring
+## Step 7: Verify Host in Monitoring
 
 Check if host appears in Checkmk:
 
@@ -278,6 +329,65 @@ Expected output: `HOSTNAME: UP`
 
 ---
 
+## Step 8: Run Service Discovery and Activate Changes (CRITICAL!)
+
+This step ensures Checkmk fully picks up the new host and discovers all available services/checks.
+
+### Option A: Via Checkmk Web UI (Recommended)
+
+1. Open Checkmk Web UI: https://checkmk.ratlm.com
+2. Use Quick Search to find the hostname
+3. Click on **Host** → **Service Discovery**
+4. Wait for discovery to complete (may take 30+ seconds)
+5. Click **Apply changes** or **Activate changes**
+6. Verify host now appears in the hosts list
+
+### Option B: Via Command Line
+
+```bash
+# Run service discovery for the specific host
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -I HOSTNAME 2>&1'"
+
+# Full configuration activation
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -O 2>&1'"
+```
+
+### Option C: Full System Refresh
+
+For complete refresh (if discovery doesn't detect services):
+
+```bash
+# 1. Run discovery on specific host
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -I HOSTNAME'"
+
+# 2. Rebuild and activate configuration
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -R && cmk -O'"
+
+# 3. Restart Checkmk services to apply all changes
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'omd restart'"
+
+# 4. Verify host and services appear
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -d HOSTNAME' | head -50"
+```
+
+**What happens in this step:**
+- ✅ Checkmk scans the new host for available services (CPU, Memory, Disk, etc.)
+- ✅ Configuration is compiled and validated
+- ✅ Changes are activated across all Nagios/monitoring components
+- ✅ Monitoring actively monitors the new host
+
+**Wait for completion:**
+- Configuration compilation takes 5-10 seconds
+- Service discovery can take 30+ seconds
+- Changes take effect after activation
+
+**If host still doesn't appear:**
+1. Check firewall is still open: `ssh brian@10.10.10.5 "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/HOSTNAME_IP/6556'"`
+2. Check logs: `ssh brian@10.10.10.5 "sudo tail -50 /omd/sites/monitoring/var/log/automation-helper/error.log"`
+3. Verify host_attributes: `ssh brian@10.10.10.5 "sudo grep -i 'HOSTNAME.*ipaddress' /omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk"`
+
+---
+
 ## Real-World Example: Adding Ansible Server
 
 **Scenario:** Add new Ansible control server at 10.10.10.30 (RedHat 9.7)
@@ -301,27 +411,54 @@ ssh brian@10.10.10.5 "ls /omd/sites/monitoring/share/check_mk/agents/ | grep '2.
 # check-mk-agent-2.4.0p15-1.noarch.rpm  <-- This one for RHEL
 ```
 
-### Step 4: Install agent
+### Step 4: Open Firewall Port 6556
+```bash
+ssh brian@10.10.10.30 "sudo firewall-cmd --permanent --add-port=6556/tcp && sudo firewall-cmd --reload"
+# Verify: sudo firewall-cmd --list-all | grep 6556
+# Should show: ports: 6556/tcp ✓
+```
+
+### Step 5: Install agent
 ```bash
 scp brian@10.10.10.5:/omd/sites/monitoring/share/check_mk/agents/check-mk-agent-2.4.0p15-1.noarch.rpm /tmp/
 scp /tmp/check-mk-agent-2.4.0p15-1.noarch.rpm brian@10.10.10.30:/tmp/
 ssh brian@10.10.10.30 "sudo rpm -i /tmp/check-mk-agent-2.4.0p15-1.noarch.rpm"
 ```
 
-### Step 5: Verify agent
+### Step 6: Verify agent and connectivity
 ```bash
 ssh brian@10.10.10.30 "sudo /usr/bin/check_mk_agent | head -5"
 # Shows Version: 2.4.0p15 ✓
+
+# Test from Checkmk server
+ssh brian@10.10.10.5 "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/10.10.10.30/6556' && echo 'REACHABLE' || echo 'BLOCKED'"
+# Output: REACHABLE ✓
 ```
 
-### Step 6: Add to Checkmk
+### Step 7: Add to Checkmk and verify
 Create and run add_host.py script with HOSTNAME=ansible, IP_ADDRESS=10.10.10.30
 
-### Step 7: Verify
+Verify in livestatus:
 ```bash
-# Check livestatus
 ssh brian@10.10.10.5 "sudo su - monitoring -c 'python3 /tmp/check_ansible.py'"
 # Output: ansible: UP ✓
+```
+
+### Step 8: Run Service Discovery and Activate
+```bash
+# Via Web UI: Search for ansible → Host → Service Discovery → Apply changes
+
+# Or via CLI:
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -I ansible && cmk -R && cmk -O'"
+
+# Full refresh (if needed):
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -I ansible && cmk -R && cmk -O && omd restart'"
+```
+
+Verify services are discovered:
+```bash
+ssh brian@10.10.10.5 "sudo su - monitoring -c 'cmk -d ansible' | grep '<<<' | wc -l"
+# Should show multiple sections (10+) indicating services are discovered ✓
 ```
 
 ---
@@ -481,13 +618,19 @@ which rpm && echo "Use .rpm"
 
 1. **ALWAYS check Checkmk version first** - All agents must match
 2. **ALWAYS detect OS before installing** - Wrong package = non-functional agent
-3. **ALWAYS verify agent responds** - Don't assume installation worked
-4. **ALWAYS wait for configuration compilation** - Changes take a moment to apply
-5. **Document additions** - Keep track of which hosts added when and why
+3. **ALWAYS open firewall port 6556** - Most Linux distros have firewalls enabled by default (firewalld or iptables)
+4. **ALWAYS verify agent responds** - Test both locally and from Checkmk server
+5. **ALWAYS run service discovery and activate** - Web UI won't fully recognize host without this critical step
+6. **ALWAYS wait for configuration compilation** - Changes take 5-10 seconds to apply
+7. **Document additions** - Keep track of which hosts added when and why
 
 ---
 
 **Last Updated:** November 14, 2025
 **Status:** Complete - Tested with ansible server (RHEL 9.7)
-**Key Lesson:** OS detection is critical - .deb on RHEL or .rpm on Debian causes silent failures
+**Key Lessons:**
+- Firewall port 6556 must be open (firewalld for RHEL, iptables for older Debian)
+- Service discovery and configuration activation are critical - host won't fully appear in Web UI without these
+- Test connectivity from Checkmk server to verify port is reachable
+- Always run full service discovery (`cmk -I hostname`) to discover available services
 
