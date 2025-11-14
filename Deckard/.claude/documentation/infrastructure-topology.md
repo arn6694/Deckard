@@ -47,13 +47,17 @@
 - **SSH Access**: `brian@10.10.10.4`
 
 #### BIND9 Secondary (Slave)
-- **IP**: 10.10.10.2
-- **Hosted On**: Zeus Docker (external system)
+- **IP**: 10.10.10.25
+- **Hosted On**: pi5 (Raspberry Pi 5)
 - **Role**: Secondary DNS server for redundancy
+- **OS**: Debian 13 (aarch64)
+- **Zone Transfer Status**: Active (synced with primary)
 - **Receives**: Zone transfers from primary (10.10.10.4)
-- **Update Method**: Automatic zone transfer from primary
+- **Update Method**: Automatic zone transfer from primary on notify
 - **Failover**: Takes over if primary becomes unavailable
-- **SSH Access**: `brian@10.10.10.2`
+- **Listening Ports**: TCP/UDP 53 on 10.10.10.25
+- **SSH Access**: `brian@10.10.10.25`
+- **Status**: Operational as of November 14, 2025
 
 ---
 
@@ -161,9 +165,9 @@
 | Service | IP | Role | Primary Tool |
 |---------|----|----|---|
 | Firewalla | 10.10.10.1 | Gateway/Firewall | Web UI |
-| BIND9 Secondary | 10.10.10.2 | DNS Failover | SSH/rndc |
+| BIND9 Secondary | 10.10.10.25 | DNS Failover | SSH/rndc/dig (pi5) |
 | Nginx PM | 10.10.10.3 | Reverse Proxy | Web UI/SSH |
-| BIND9 Primary | 10.10.10.4 | DNS Authority | SSH/rndc |
+| BIND9 Primary | 10.10.10.4 | DNS Authority | SSH/rndc/dig |
 | Checkmk | 10.10.10.5 | Monitoring | Web UI/API |
 | Home Assistant | 10.10.10.6 | Automation | Web UI |
 | Proxmox | 10.10.10.17 | Hypervisor | Web UI/SSH |
@@ -296,13 +300,21 @@ Critical Chain:
 
 ## Recent Updates
 
-- **November 14, 2025**: Pi-hole Secondary (pihole2) migrated from Zeus Docker (10.10.10.23) to pi5 (10.10.10.25)
+- **November 14, 2025 (Afternoon)**: BIND9 Secondary DNS installed on pi5 (10.10.10.25)
+  - BIND9 now provides authoritative DNS for .lan zones on secondary
+  - Automatic zone transfers from primary (10.10.10.4) fully operational
+  - Listening on 10.10.10.25:53 with both TCP and UDP
+  - Zone files transferred and synchronized (binary format for efficiency)
+  - Provides DNS failover if primary BIND9 (10.10.10.4) becomes unavailable
+  - Tested: Forward/reverse lookups working identically to primary
+
+- **November 14, 2025 (Morning)**: Pi-hole Secondary (pihole2) migrated from Zeus Docker (10.10.10.23) to pi5 (10.10.10.25)
   - New hardware: Raspberry Pi 5 with Debian 13 (aarch64)
-  - Web UI now at http://10.10.10.25/admin/
-  - DNS fully operational on port 53 with all local configurations
-  - Provides DNS failover if primary pihole (10.10.10.22) becomes unavailable
+  - Web UI at http://10.10.10.25/admin/ (Apache + PHP)
+  - DNS filtering fully operational on port 53 with dnsmasq
+  - Provides failover if primary pihole (10.10.10.22) becomes unavailable
 
 ---
 
-**Last Updated**: November 14, 2025
-**Status**: Phase 1 Complete - pihole2 migration complete
+**Last Updated**: November 14, 2025 (BIND9 secondary + pihole2 installed)
+**Status**: Phase 1 Complete - pi5 fully configured with DNS + DNS filtering
