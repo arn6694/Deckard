@@ -16,37 +16,11 @@
     },
     {
       "type": "visualization",
-      "id": "threat-intel-top-countries",
-      "version": 1,
-      "attributes": {
-        "title": "Attack Origins by Country",
-        "visState": "{\"title\": \"Attack Origins by Country\", \"type\": \"histogram\", \"params\": {\"type\": \"histogram\", \"grid\": {\"categoryLines\": false, \"valueAxis\": \"ValueAxis-1\"}, \"categoryAxes\": [{\"id\": \"CategoryAxis-1\", \"type\": \"category\", \"position\": \"left\", \"show\": true, \"style\": {}, \"scale\": {\"type\": \"linear\"}, \"labels\": {\"show\": true, \"truncate\": 100}, \"title\": {}}], \"valueAxes\": [{\"id\": \"ValueAxis-1\", \"name\": \"Right\", \"type\": \"value\", \"position\": \"right\", \"show\": true, \"style\": {}, \"scale\": {\"type\": \"linear\"}, \"labels\": {\"show\": true}, \"title\": {\"text\": \"Count\"}}], \"seriesParams\": [{\"show\": true, \"type\": \"histogram\", \"valueAxis\": \"ValueAxis-1\"}], \"addTooltip\": true, \"addLegend\": true, \"legendPosition\": \"right\", \"isDonut\": false}, \"aggs\": [{\"id\": \"2\", \"enabled\": true, \"type\": \"terms\", \"schema\": \"segment\", \"params\": {\"field\": \"GeoIP.country\", \"size\": 10, \"order\": \"desc\", \"customLabel\": \"Country\"}}, {\"id\": \"1\", \"enabled\": true, \"type\": \"count\", \"schema\": \"metric\"}]}",
-        "uiStateJSON": "{}",
-        "kibanaSavedObjectMeta": {
-          "searchSourceJSON": "{\"index\": \"wazuh-alerts-*\", \"query\": {\"match_all\": {}}, \"filter\": []}"
-        }
-      }
-    },
-    {
-      "type": "visualization",
-      "id": "threat-intel-worldmap",
-      "version": 1,
-      "attributes": {
-        "title": "Attack Origins - World Heatmap",
-        "visState": "{\"title\": \"Attack Origins - World Heatmap\", \"type\": \"tile_map\", \"params\": {\"addTooltip\": true, \"initialZoom\": 2, \"defaultFitBounds\": \"geonamesToo\", \"mapType\": \"Scaled Circle Markers\", \"heatClusterSize\": 1.5, \"isDesaturated\": true, \"showLegend\": true, \"wmsOverlays\": []}, \"aggs\": [{\"id\": \"2\", \"enabled\": true, \"type\": \"geohash_grid\", \"schema\": \"segment\", \"params\": {\"field\": \"GeoIP.location\", \"precision\": 4}}, {\"id\": \"1\", \"enabled\": true, \"type\": \"count\", \"schema\": \"metric\"}]}",
-        "uiStateJSON": "{}",
-        "kibanaSavedObjectMeta": {
-          "searchSourceJSON": "{\"index\": \"wazuh-alerts-*\", \"query\": {\"match_all\": {}}, \"filter\": []}"
-        }
-      }
-    },
-    {
-      "type": "visualization",
       "id": "threat-intel-top-ips",
       "version": 1,
       "attributes": {
         "title": "Top Malicious IPs",
-        "visState": "{\"title\": \"Top Malicious IPs\", \"type\": \"table\", \"params\": {\"perPage\": 50, \"showPartialRows\": false, \"showMeticsAtAllLevels\": false, \"showTotal\": false, \"totalFunc\": \"sum\", \"percentageCol\": \"\"}, \"aggs\": [{\"id\": \"2\", \"enabled\": true, \"type\": \"terms\", \"schema\": \"bucket\", \"params\": {\"field\": \"data.srcip\", \"size\": 50, \"order\": \"desc\", \"customLabel\": \"Source IP\"}}, {\"id\": \"3\", \"enabled\": true, \"type\": \"terms\", \"schema\": \"bucket\", \"params\": {\"field\": \"GeoIP.country_iso_code\", \"size\": 5, \"order\": \"desc\", \"customLabel\": \"Country\"}}, {\"id\": \"1\", \"enabled\": true, \"type\": \"count\", \"schema\": \"metric\", \"params\": {\"customLabel\": \"Count\"}}]}",
+        "visState": "{\"title\": \"Top Malicious IPs\", \"type\": \"table\", \"params\": {\"perPage\": 50, \"showPartialRows\": false, \"showMeticsAtAllLevels\": false, \"showTotal\": false, \"totalFunc\": \"sum\", \"percentageCol\": \"\"}, \"aggs\": [{\"id\": \"2\", \"enabled\": true, \"type\": \"terms\", \"schema\": \"bucket\", \"params\": {\"field\": \"data.srcip\", \"size\": 50, \"order\": \"desc\", \"customLabel\": \"Source IP\"}}, {\"id\": \"1\", \"enabled\": true, \"type\": \"count\", \"schema\": \"metric\", \"params\": {\"customLabel\": \"Count\"}}]}",
         "uiStateJSON": "{\"vis\": {\"params\": {\"sort\": {\"columnIndex\": null, \"direction\": null}}}}",
         "kibanaSavedObjectMeta": {
           "searchSourceJSON": "{\"index\": \"wazuh-alerts-*\", \"query\": {\"match_all\": {}}, \"filter\": []}"
@@ -90,7 +64,7 @@
             "gridData": {
               "x": 0,
               "y": 0,
-              "w": 24,
+              "w": 48,
               "h": 15
             },
             "type": "visualization",
@@ -98,30 +72,10 @@
           },
           {
             "gridData": {
-              "x": 24,
-              "y": 0,
-              "w": 24,
-              "h": 15
-            },
-            "type": "visualization",
-            "id": "threat-intel-top-countries"
-          },
-          {
-            "gridData": {
               "x": 0,
               "y": 15,
-              "w": 24,
-              "h": 15
-            },
-            "type": "visualization",
-            "id": "threat-intel-worldmap"
-          },
-          {
-            "gridData": {
-              "x": 24,
-              "y": 15,
-              "w": 24,
-              "h": 15
+              "w": 48,
+              "h": 10
             },
             "type": "visualization",
             "id": "threat-intel-severity"
@@ -129,22 +83,22 @@
           {
             "gridData": {
               "x": 0,
-              "y": 30,
-              "w": 48,
-              "h": 20
-            },
-            "type": "visualization",
-            "id": "threat-intel-top-ips"
-          },
-          {
-            "gridData": {
-              "x": 0,
-              "y": 50,
+              "y": 25,
               "w": 12,
               "h": 10
             },
             "type": "visualization",
             "id": "threat-intel-blocked-count"
+          },
+          {
+            "gridData": {
+              "x": 12,
+              "y": 25,
+              "w": 36,
+              "h": 20
+            },
+            "type": "visualization",
+            "id": "threat-intel-top-ips"
           }
         ]
       }
