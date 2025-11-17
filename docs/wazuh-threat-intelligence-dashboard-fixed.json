@@ -54,6 +54,32 @@
       }
     },
     {
+      "type": "visualization",
+      "id": "threat-intel-attack-origins",
+      "version": 1,
+      "attributes": {
+        "title": "Attack Origins - World Map",
+        "visState": "{\"title\": \"Attack Origins - World Map\", \"type\": \"map\", \"params\": {\"mapCenter\": [0, 0], \"mapZoom\": 2, \"showTooltipOnHover\": true}, \"aggs\": []}",
+        "uiStateJSON": "{}",
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": "{\"index\": \"wazuh-alerts-*\", \"query\": {\"match_all\": {}}, \"filter\": []}"
+        }
+      }
+    },
+    {
+      "type": "visualization",
+      "id": "threat-intel-countries",
+      "version": 1,
+      "attributes": {
+        "title": "Attack Origins by Country",
+        "visState": "{\"title\": \"Attack Origins by Country\", \"type\": \"horizontal_bar\", \"params\": {\"addTooltip\": true, \"addLegend\": true, \"legendPosition\": \"right\", \"isDonut\": false}, \"aggs\": [{\"id\": \"2\", \"enabled\": true, \"type\": \"terms\", \"schema\": \"segment\", \"params\": {\"field\": \"GeoLocation.country_name\", \"size\": 15, \"order\": \"desc\", \"customLabel\": \"Country\"}}, {\"id\": \"1\", \"enabled\": true, \"type\": \"count\", \"schema\": \"metric\", \"params\": {\"customLabel\": \"Attack Count\"}}]}",
+        "uiStateJSON": "{}",
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": "{\"index\": \"wazuh-alerts-*\", \"query\": {\"match_all\": {}}, \"filter\": []}"
+        }
+      }
+    },
+    {
       "type": "dashboard",
       "id": "threat-intelligence-summary",
       "version": 1,
@@ -74,6 +100,26 @@
             "gridData": {
               "x": 0,
               "y": 15,
+              "w": 24,
+              "h": 15
+            },
+            "type": "visualization",
+            "id": "threat-intel-attack-origins"
+          },
+          {
+            "gridData": {
+              "x": 24,
+              "y": 15,
+              "w": 24,
+              "h": 15
+            },
+            "type": "visualization",
+            "id": "threat-intel-countries"
+          },
+          {
+            "gridData": {
+              "x": 0,
+              "y": 30,
               "w": 48,
               "h": 10
             },
@@ -83,7 +129,7 @@
           {
             "gridData": {
               "x": 0,
-              "y": 25,
+              "y": 40,
               "w": 12,
               "h": 10
             },
@@ -93,9 +139,9 @@
           {
             "gridData": {
               "x": 12,
-              "y": 25,
+              "y": 40,
               "w": 36,
-              "h": 20
+              "h": 15
             },
             "type": "visualization",
             "id": "threat-intel-top-ips"
