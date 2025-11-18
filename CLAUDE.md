@@ -499,6 +499,186 @@ The skill is invoked automatically when you work with RHEL/OEL systems or reques
 
 ---
 
+### Python Security Projects
+
+**File:** `~/.claude/skills/python-projects-security/SKILL.md`
+
+**Purpose:** Senior Python engineer teaching secure programming from beginner to professional through hands-on projects focused on Linux automation, containers, security, and web development.
+
+**When to Use:**
+- Learning Python from scratch to professional level
+- Building security-focused Python applications
+- Linux system automation with Python
+- Container management with Python
+- Web application development (Flask/FastAPI)
+- Security tool development
+- Network programming and scanning
+- Project-based skill development
+
+**How to Activate:**
+The skill is invoked automatically when you work on Python programming or request Python project guidance.
+
+**What It Does:**
+- Teaches Python with patient, wizard-level expertise
+- Provides beginner to professional project ideas
+- Security-first approach in all code
+- Covers Linux automation, containers, web dev, security tools
+- Comprehensive error handling and best practices
+- Input validation and secure coding patterns
+- Real-world project examples with full code
+- Code review and improvement suggestions
+
+**Key Features:**
+- Project-based learning (6+ complete projects)
+- Security best practices in every lesson
+- Professional code patterns from day one
+- Focus areas: Linux, containers, security, web dev, games
+- Password hashing, API security, authentication
+- Network programming and scanning tools
+- Web frameworks (FastAPI) with security
+- Comprehensive testing and validation
+
+---
+
+### Podman Container Infrastructure
+
+**File:** `~/.claude/skills/podman-infrastructure/SKILL.md`
+
+**Purpose:** Senior Podman engineer for designing and deploying production container infrastructure on RHEL/Oracle Linux with security-first principles and latest technology.
+
+**When to Use:**
+- Designing container infrastructure from scratch
+- Installing and configuring Podman on RHEL/OEL
+- Implementing rootless container environments
+- Systemd integration for containers
+- Container networking and storage design
+- Security hardening containers
+- Production container operations
+- Migrating from Docker to Podman
+
+**How to Activate:**
+The skill is invoked automatically when you work with Podman or container infrastructure.
+
+**What It Does:**
+- Complete Podman installation on RHEL/OEL
+- Infrastructure design from ground up
+- Rootless container configuration
+- Systemd service integration
+- Network configuration (CNI, pods, custom networks)
+- Storage management and optimization
+- Image signing and verification
+- Secrets management
+- Production monitoring and troubleshooting
+
+**Key Features:**
+- RHEL/OEL 8/9 installation procedures
+- Rootless containers by default
+- Systemd integration for auto-start
+- Security hardening (SELinux, signing, secrets)
+- Pod networking for multi-container apps
+- Volume and storage best practices
+- Latest Podman 4.x/5.x features
+- Production-ready patterns
+
+---
+
+### Bash Scripting Professional
+
+**File:** `~/.claude/skills/bash-scripting-pro/SKILL.md`
+
+**Purpose:** Senior Bash scripting engineer teaching from beginner to professional with project-based learning, useful automation scripts, and Black Hat techniques for authorized security testing.
+
+**When to Use:**
+- Learning Bash scripting from fundamentals
+- Building system automation scripts
+- Creating security testing tools
+- Network scanning and enumeration
+- Log monitoring and alerting
+- Database backup automation
+- Privilege escalation testing (authorized)
+- Production script development
+
+**How to Activate:**
+The skill is invoked automatically when you work with Bash scripts or shell automation.
+
+**What It Does:**
+- Teaches Bash from beginner to professional
+- Project-based learning approach
+- Security-focused script development
+- Black Hat techniques for authorized testing
+- Error handling and validation
+- Parallel processing techniques
+- Professional logging frameworks
+- Production-grade patterns
+
+**Key Features:**
+- Comprehensive best practices (set -euo pipefail)
+- Input validation and sanitization
+- Secure temp file handling
+- No command injection vulnerabilities
+- System backup and automation scripts
+- Network reconnaissance tools
+- Privilege escalation enumeration
+- Reverse shell generators (authorized use!)
+- Professional error handling
+
+**Security Tools (Authorized Use Only):**
+- Network discovery and scanning
+- Port enumeration
+- Service detection
+- Password cracking helpers
+- Privilege escalation checks
+- Reconnaissance automation
+
+---
+
+### Katello/Foreman Deployment
+
+**File:** `~/.claude/skills/katello-foreman/SKILL.md`
+
+**Purpose:** Deploy and manage Katello/Foreman on Oracle Linux for enterprise content management, provisioning, patch management, and Ansible integration.
+
+**When to Use:**
+- Deploying Katello/Foreman on Oracle Linux
+- Enterprise lifecycle management setup
+- Content and subscription management
+- Kickstart/PXE provisioning configuration
+- Ansible integration for configuration management
+- Patch and errata management
+- Host lifecycle management
+- Security and compliance management
+
+**How to Activate:**
+The skill is invoked automatically when you work with Katello/Foreman or enterprise lifecycle management.
+
+**What It Does:**
+- Latest Katello/Foreman installation on OEL 8/9
+- Complete deployment from prerequisites to production
+- Content management (RPM, containers, files)
+- Lifecycle environment configuration
+- Kickstart provisioning setup
+- Ansible role integration
+- Patch management workflows
+- Security hardening
+- Backup and recovery procedures
+- Troubleshooting and maintenance
+
+**Key Features:**
+- Oracle Linux 8/9 deployment
+- Latest version installation
+- Content views and lifecycle environments
+- Kickstart template management
+- PXE boot configuration
+- Ansible playbook integration
+- Errata and patch management
+- RBAC and access control
+- SSL/TLS configuration
+- Hammer CLI automation
+- Health monitoring
+- Backup procedures
+
+---
+
 ## How to Add New Prompts/Skills
 
 When creating new custom prompts, agents, or skills:
