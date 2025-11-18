@@ -445,6 +445,60 @@ The skill is invoked automatically when you work with Netbox or infrastructure d
 
 ---
 
+### RHEL/Oracle Linux Engineering
+
+**File:** `~/.claude/skills/rhel-engineering/SKILL.md`
+
+**Purpose:** Senior-level Red Hat Enterprise Linux and Oracle Linux system administration, performance tuning, troubleshooting, and security hardening for enterprise production environments.
+
+**When to Use:**
+- RHEL/OEL system administration and optimization
+- Performance tuning (CPU, memory, disk, network)
+- Troubleshooting production issues systematically
+- SELinux configuration and troubleshooting
+- Security hardening and compliance
+- Storage management (LVM, filesystems)
+- Kernel tuning and module management
+- Systemd service management
+- Container operations (Podman/Buildah)
+- Subscription and repository management
+
+**How to Activate:**
+The skill is invoked automatically when you work with RHEL/OEL systems or request Linux system administration tasks.
+
+**What It Does:**
+- System administration fundamentals (packages, services, users)
+- Performance optimization across all subsystems
+- Systematic troubleshooting methodology
+- SELinux policy management and troubleshooting
+- Security hardening (firewalld, AIDE, fail2ban)
+- LVM and filesystem operations
+- Network configuration (bonding, VLANs, tuning)
+- Kernel parameter tuning and module management
+- Enterprise container management with systemd integration
+- RHEL subscription and repository management
+
+**Key Features:**
+- Production-focused best practices
+- Systematic troubleshooting approach
+- Performance tuning for all subsystems
+- Comprehensive SELinux management
+- Security compliance (CIS, STIG)
+- LVM and storage optimization
+- Advanced networking (bonding, VLANs)
+- Kernel tuning and crash analysis
+- Rootless containers with systemd
+- Enterprise change management procedures
+
+**Supported Distributions:**
+- Red Hat Enterprise Linux 7, 8, 9
+- Oracle Linux 7, 8, 9
+- CentOS Stream 8, 9
+- Rocky Linux 8, 9
+- AlmaLinux 8, 9
+
+---
+
 ## How to Add New Prompts/Skills
 
 When creating new custom prompts, agents, or skills:
