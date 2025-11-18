@@ -196,6 +196,255 @@ Just ask something like:
 
 ---
 
+## Linux Engineering Skills
+
+The following skills provide comprehensive automation and management capabilities for Linux engineering tasks. These skills are stored in `~/.claude/skills/` and are available globally.
+
+### Ansible Playbook Runner
+
+**File:** `~/.claude/skills/ansible-runner/SKILL.md`
+
+**Purpose:** Run, test, validate, and troubleshoot Ansible playbooks with best practices for infrastructure automation.
+
+**When to Use:**
+- Executing Ansible playbooks with proper safety checks
+- Running dry-run tests before production changes
+- Validating playbook syntax and inventory
+- Installing and managing Ansible Galaxy roles
+- Troubleshooting failed playbook executions
+- Managing vault-encrypted variables
+
+**How to Activate:**
+The skill is invoked automatically when you work with Ansible playbooks or request Ansible operations.
+
+**What It Does:**
+- Validates playbook syntax before execution
+- Always runs in check mode (dry-run) first
+- Tests host connectivity and inventory
+- Installs role dependencies from `requirements.yml`
+- Handles vault-encrypted files securely
+- Provides detailed troubleshooting for failures
+- Asks for user approval before making changes
+- Documents all changes made
+
+**Key Features:**
+- Pre-flight validation (syntax, inventory, connectivity)
+- Mandatory dry-run before execution
+- User approval workflow for safety
+- Comprehensive error handling and debugging
+- Support for tags, limits, and vault operations
+- Best practices enforcement
+
+---
+
+### Checkmk Automation
+
+**File:** `~/.claude/skills/checkmk-automation/SKILL.md`
+
+**Purpose:** Automate Checkmk operations via REST API including host management, service discovery, and bulk operations.
+
+**When to Use:**
+- Adding or removing monitored hosts
+- Discovering services on existing hosts
+- Managing alert rules and notifications
+- Bulk operations on multiple hosts
+- Deploying or updating monitoring agents
+- Querying monitoring status and metrics
+- Configuring HBAC and notification rules
+
+**How to Activate:**
+The skill is invoked automatically when you work with Checkmk or request monitoring operations.
+
+**What It Does:**
+- Manages hosts via Checkmk REST API
+- Performs automatic service discovery
+- Activates changes after modifications
+- Bulk imports hosts from various sources
+- Manages monitoring agents across fleet
+- Configures alerting and notifications
+- Provides health checks and diagnostics
+- Integrates with Ansible inventories
+
+**Key Features:**
+- Full REST API integration with Checkmk 2.0+
+- Bulk operations for efficiency
+- Automatic change activation
+- Agent deployment and management
+- Service discovery automation
+- Integration with existing infrastructure
+- Comprehensive error handling
+
+---
+
+### Proxmox Management
+
+**File:** `~/.claude/skills/proxmox-manager/SKILL.md`
+
+**Purpose:** Manage Proxmox VE infrastructure including VMs, LXC containers, storage, networking, and backups via API and CLI.
+
+**When to Use:**
+- Creating or cloning virtual machines
+- Deploying LXC containers
+- Managing VM/container lifecycle (start, stop, migrate)
+- Creating snapshots and backups
+- Configuring storage pools
+- Managing network bridges and VLANs
+- Monitoring resource usage
+- Performing restore operations
+
+**How to Activate:**
+The skill is invoked automatically when you work with Proxmox or request virtualization operations.
+
+**What It Does:**
+- Creates and manages VMs and containers
+- Handles snapshots and backups
+- Manages storage configurations
+- Configures network settings
+- Monitors resource utilization
+- Performs migration operations
+- Manages cluster operations
+- Automates common provisioning tasks
+
+**Key Features:**
+- Full `qm` and `pct` command support
+- Template-based VM deployment
+- Snapshot management for rollback
+- Backup and restore automation
+- Resource monitoring and optimization
+- Network and storage configuration
+- Cluster-aware operations
+
+---
+
+### DNS/BIND9 Management
+
+**File:** `~/.claude/skills/dns-manager/SKILL.md`
+
+**Purpose:** Manage DNS infrastructure including BIND9 zones, Pi-hole configuration, DNS records, and troubleshooting.
+
+**When to Use:**
+- Adding or modifying DNS zones
+- Managing DNS records (A, AAAA, CNAME, MX, TXT, PTR)
+- Configuring zone transfers between primary/secondary
+- Managing Pi-hole local DNS entries
+- Enabling DNSSEC for zones
+- Troubleshooting DNS resolution issues
+- Performing bulk DNS record imports
+- Migrating DNS infrastructure
+
+**How to Activate:**
+The skill is invoked automatically when you work with DNS or BIND9 operations.
+
+**What It Does:**
+- Creates and manages BIND9 zones
+- Updates DNS records with serial increment
+- Configures primary/secondary replication
+- Manages reverse DNS (PTR records)
+- Integrates with Pi-hole for local DNS
+- Enables DNSSEC signing
+- Validates zone files before reload
+- Provides comprehensive troubleshooting
+
+**Key Features:**
+- Automatic serial number management
+- Zone file validation before changes
+- Primary/secondary synchronization
+- Pi-hole integration
+- DNSSEC support
+- Reverse DNS management
+- Bulk record imports from CSV
+- Safety checks and backups
+
+---
+
+### FreeIPA Identity Management
+
+**File:** `~/.claude/skills/freeipa-manager/SKILL.md`
+
+**Purpose:** Manage FreeIPA identity and access management including users, groups, hosts, RBAC, Kerberos, and LDAP.
+
+**When to Use:**
+- Creating and managing user accounts
+- Managing groups and RBAC
+- Enrolling hosts to IPA domain
+- Configuring SUDO rules
+- Setting up HBAC (host-based access control)
+- Managing Kerberos principals
+- Issuing and managing certificates
+- Onboarding/offboarding employees
+- Integrating services with FreeIPA
+
+**How to Activate:**
+The skill is invoked automatically when you work with FreeIPA or identity management operations.
+
+**What It Does:**
+- Creates and manages user accounts
+- Handles group memberships and nesting
+- Enrolls hosts to IPA domain
+- Configures centralized SUDO rules
+- Manages HBAC policies
+- Handles Kerberos authentication
+- Issues service certificates
+- Integrates DNS with IPA
+- Manages service principals
+
+**Key Features:**
+- Complete user lifecycle management
+- RBAC with groups and roles
+- Host enrollment automation
+- Centralized SUDO configuration
+- HBAC rule testing and validation
+- Kerberos ticket management
+- Service principal creation
+- Certificate issuance and management
+- Replication health monitoring
+
+---
+
+### Netbox Infrastructure Documentation
+
+**File:** `~/.claude/skills/netbox-documenter/SKILL.md`
+
+**Purpose:** Document and manage infrastructure in Netbox DCIM/IPAM including devices, IPs, VLANs, circuits, and relationships.
+
+**When to Use:**
+- Documenting physical and virtual infrastructure
+- Managing IP address allocations (IPAM)
+- Tracking devices, racks, and sites
+- Managing VLANs and network segments
+- Documenting circuits and providers
+- Tracking cable connections
+- Generating infrastructure documentation
+- Syncing from existing infrastructure (Proxmox, etc.)
+- Maintaining source of truth
+
+**How to Activate:**
+The skill is invoked automatically when you work with Netbox or infrastructure documentation.
+
+**What It Does:**
+- Documents devices and virtual machines
+- Manages IP address allocations
+- Tracks physical and logical connections
+- Manages sites, racks, and locations
+- Documents circuits and providers
+- Creates VLANs and network segments
+- Generates infrastructure reports
+- Syncs data from infrastructure tools
+- Provides bulk import/export
+
+**Key Features:**
+- Full REST API integration
+- Python `pynetbox` library support
+- Bulk operations via CSV import
+- Infrastructure synchronization
+- IP address planning and allocation
+- Cable and connection tracking
+- Custom fields and tags
+- Documentation generation
+- Relationship mapping
+
+---
+
 ## How to Add New Prompts/Skills
 
 When creating new custom prompts, agents, or skills:
