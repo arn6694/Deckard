@@ -5,10 +5,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This is a homelab operations repository containing scripts and documentation for managing:
-- **Monitoring**: Enterprise monitoring via Checkmk 2.4
+- **Monitoring**: Enterprise monitoring via Checkmk 2.4 and Wazuh security monitoring
 - **DNS**: Pi-hole DNS/ad-blocking with BIND9 authoritative DNS
 - **Services**: Nginx Proxy Manager for reverse proxy and SSL/TLS
 - **Integration**: Home Assistant monitoring via Checkmk
+- **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
+
+## Current Status (Last Updated: 2025-11-21)
+
+### Recent Work
+- Fixed Nginx Proxy Manager (10.10.10.3) - killed orphaned nginx processes, restored full operation
+- Replaced broken n8n XDA→Discord workflow with Python script - hourly article posts working reliably
+- Submitted Google Safe Browsing false positive report for n8n.ratlm.com (awaiting review)
+
+### Current Focus
+- Replace Wazuh→Discord n8n workflow with Python script (same approach as XDA)
+- Evaluate if n8n service is still needed after workflow migrations
+- Document new Python monitoring scripts in OPERATIONS.md
+
+### Known Issues
+- Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - fix planned)
+- n8n.ratlm.com showing Google Safe Browsing warning (false positive report submitted)
+
+### Next Steps
+1. Create /usr/local/bin/wazuh_discord.py to replace broken n8n workflow
+2. Evaluate n8n service necessity after Wazuh workflow migration
+3. Document XDA and Wazuh Python scripts in operations documentation
 
 ## Quick Navigation
 
@@ -92,6 +114,8 @@ The following specialized agents are available and will auto-activate when relev
 - **`Checkmk.md`** - Checkmk monitoring, alerts, APIs, checks (auto-activates on Checkmk questions)
 - **`network_engineer.md`** - DNS, BIND9, Pi-hole, networking (auto-activates on network questions)
 - **`ansible.md`** - Ansible automation, infrastructure-as-code (auto-activates on Ansible questions)
+- **`black-friday-shopper.md`** - Deal hunting and gift recommendations with price comparison across retailers
+- **`brutal-critic.md`** - Ruthless technical critique with framework-based feedback
 - **`session_closer.md`** - Session management for wrapping up work sessions
 
 ### Global Agents (`~/.claude/agents/`)
@@ -193,6 +217,74 @@ Just ask something like:
 - Questions assumptions without accepting excuses
 - Acknowledges genuinely good work
 - Refuses to sugarcoat obvious problems
+
+---
+
+### Black Friday Shopper
+
+**File:** `.claude/agents/black-friday-shopper.md`
+
+**Purpose:** Comprehensive deal-hunting and gift recommendation agent that finds the best prices across major retailers for family members with tracked interests and budgets.
+
+**When to Use:**
+- Black Friday / Cyber Monday shopping season
+- Christmas gift planning and research
+- Birthday gifts throughout the year
+- Product research and price comparison
+- Finding alternatives within specific budgets
+- Comparing products across multiple retailers
+
+**How to Activate:**
+Just ask something like:
+- "Find Black Friday deals for my family"
+- "Research gaming laptops for my 10-year-old under $1000"
+- "Find the best deals on mini PCs with high RAM"
+- "Compare coffee machines for my wife"
+- "What are good gifts for a 12-year-old who likes Minecraft and fishing?"
+
+**What It Does:**
+- Searches major retailers (Amazon, Best Buy, Walmart, Target, Newegg, etc.)
+- Compares prices across 3+ sources for each product
+- Verifies deal authenticity (checks if discount is genuine)
+- Researches product reviews and ratings from expert sources
+- Generates tiered recommendations (Best Value, Budget, Premium)
+- Provides creative gift alternatives
+- Calculates total cost including accessories
+- Advises on deal timing (buy now vs. wait)
+- Tracks price history and trends when possible
+
+**Family Profile:**
+- **12-year-old son:** Roblox/Minecraft gaming, fishing, potential bike interest
+- **10-year-old son:** Gaming laptop (primary request), gaming peripherals
+- **Wife:** Coffee equipment, slippers, blankets, comfort items
+- **User:** Mini PC with AMD Ryzen AI Max+ 395 CPU, 128GB RAM, under $2500 budget
+
+**Research Methodology:**
+1. Searches 7+ products per family member
+2. Price comparison across 3+ retailers per product
+3. Reviews from Wirecutter, RTINGS, Tom's Hardware, Reddit
+4. Deal verification via CamelCamelCamel, Slickdeals
+5. Checks for coupon codes and cashback offers
+6. Evaluates shipping times and return policies
+
+**Output Format:**
+- Top Pick with full specs, pricing, and reasoning
+- Best Value option (budget-friendly)
+- Premium Choice (if budget allows)
+- Creative gift ideas
+- Products to avoid (with reasons)
+- Price comparison tables
+- Action items with deal expiration dates
+
+**Reusability:**
+Agent adapts to any shopping season and can be reused for:
+- Holiday shopping (Black Friday, Christmas, Prime Day)
+- Birthday gifts
+- Back-to-school shopping
+- General product research
+- Budget-conscious purchasing decisions
+
+Simply specify who you're shopping for, budget, and timeline - the agent will search current deals and pricing.
 
 ---
 
