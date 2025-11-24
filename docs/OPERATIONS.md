@@ -427,3 +427,134 @@ sudo su - monitoring -c 'cmk -d new-host | grep service-name'
 ```bash
 # Follow "Task: Removing/Decommissioning a Host" section above
 ```
+
+---
+
+## Automated Monitoring Scripts
+
+### XDA Developers → Discord Monitoring
+
+**Purpose**: Monitors XDA Developers RSS feed and posts new articles to Discord hourly with duplicate detection.
+
+**Location**: 10.10.10.52 (n8n host)
+
+#### Files and Ownership
+
+All files must be owned by `brian:brian` (not root) since the cron job runs as the brian user.
+
+```bash
+# Script
+/usr/local/bin/xda_discord.py
+Owner: brian:brian
+Permissions: 755 (executable)
+
+# State tracking (duplicate detection)
+/var/lib/xda_discord/posted_articles.txt
+Owner: brian:brian
+Permissions: 644
+
+# Logs
+/var/log/xda_discord.log
+Owner: brian:brian
+Permissions: 644
+```
+
+#### Cron Schedule
+
+```bash
+# On 10.10.10.52 (brian user crontab):
+0 * * * * /usr/bin/python3 /usr/local/bin/xda_discord.py
+```
+
+Runs every hour at the top of the hour (e.g., 1:00, 2:00, 3:00).
+
+#### How It Works
+
+1. **Fetches RSS feed** from https://www.xda-developers.com/feed/
+2. **Parses articles** using regex to extract title and link
+3. **Checks for duplicates** against `/var/lib/xda_discord/posted_articles.txt`
+4. **Posts new articles** to Discord webhook (all new articles in one run, not just one)
+5. **Updates state file** with posted article links (keeps last 100)
+6. **Logs all activity** to `/var/log/xda_discord.log`
+
+#### Duplicate Detection (Important!)
+
+The script uses a **pre-emptive duplicate detection** strategy:
+
+```python
+# Article is marked as posted BEFORE attempting Discord POST
+posted.add(link)
+
+try:
+    urllib.request.urlopen(discord_webhook)
+    log("✓ Posted successfully")
+except Exception as e:
+    log("✗ Failed to post")
+```
+
+**Why this matters**: If Discord rate limits or returns 403 errors, the article is still marked as posted, preventing duplicates on the next hourly run. This was a critical bug fix implemented 2025-11-24.
+
+#### Discord Message Format
+
+```
+🔔 **New XDA Article:**
+**[Article Title]**
+https://www.xda-developers.com/article-link/
+```
+
+Messages are posted to Discord webhook: `1441217711844757658`
+
+#### Troubleshooting
+
+**Check if script is running:**
+```bash
+ssh brian@10.10.10.52 'crontab -l | grep xda'
+```
+
+**View recent logs:**
+```bash
+ssh brian@10.10.10.52 'tail -30 /var/log/xda_discord.log'
+```
+
+**Check state file (posted articles):**
+```bash
+ssh brian@10.10.10.52 'wc -l /var/lib/xda_discord/posted_articles.txt'
+ssh brian@10.10.10.52 'tail -10 /var/lib/xda_discord/posted_articles.txt'
+```
+
+**Test script manually:**
+```bash
+ssh brian@10.10.10.52 '/usr/bin/python3 /usr/local/bin/xda_discord.py'
+```
+
+**Common Issues:**
+
+1. **No posts appearing**: Check log file for errors, verify Discord webhook is valid
+2. **Duplicate posts**: Verify `posted.add(link)` happens BEFORE Discord POST in script
+3. **Permission errors**: Ensure all files owned by `brian:brian`, not `root:root`
+4. **Script not logging**: Check file permissions on log file, verify ownership
+
+**Fix ownership if needed:**
+```bash
+ssh brian@10.10.10.52 'sudo chown brian:brian /usr/local/bin/xda_discord.py'
+ssh brian@10.10.52 'sudo chown brian:brian /var/log/xda_discord.log'
+ssh brian@10.10.10.52 'sudo chown brian:brian /var/lib/xda_discord/posted_articles.txt'
+```
+
+#### Modifying the Script
+
+**Location**: 10.10.10.52:/usr/local/bin/xda_discord.py
+
+**After editing:**
+1. Test manually first: `/usr/bin/python3 /usr/local/bin/xda_discord.py`
+2. Check logs for errors: `tail /var/log/xda_discord.log`
+3. Verify Discord message posted correctly
+4. Wait for next hourly cron run to confirm automation works
+
+**Important**: Always maintain the duplicate detection logic (mark as posted BEFORE Discord POST).
+
+#### Historical Notes
+
+- **2025-11-21**: Initial Python implementation (replaced n8n workflow)
+- **2025-11-24**: Fixed critical duplicate detection bug (moved `posted.add()` before Discord POST)
+- **2025-11-24**: Fixed file ownership issue (changed from root:root to brian:brian)
