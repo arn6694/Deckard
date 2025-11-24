@@ -11,26 +11,31 @@ This is a homelab operations repository containing scripts and documentation for
 - **Integration**: Home Assistant monitoring via Checkmk
 - **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
 
-## Current Status (Last Updated: 2025-11-21)
+## Current Status (Last Updated: 2025-11-24)
 
 ### Recent Work
+- **XDA Monitoring Fixed (2025-11-24)**: Fixed critical duplicate detection bug in XDA→Discord script on 10.10.10.52
+  - Moved `posted.add(link)` to execute BEFORE Discord POST attempt
+  - Fixed file ownership issues (root:root → brian:brian for proper logging)
+  - Fully documented in docs/OPERATIONS.md
 - Fixed Nginx Proxy Manager (10.10.10.3) - killed orphaned nginx processes, restored full operation
-- Replaced broken n8n XDA→Discord workflow with Python script - hourly article posts working reliably
+- Replaced broken n8n XDA→Discord workflow with Python script (Nov 2025)
 - Submitted Google Safe Browsing false positive report for n8n.ratlm.com (awaiting review)
 
 ### Current Focus
-- Replace Wazuh→Discord n8n workflow with Python script (same approach as XDA)
-- Evaluate if n8n service is still needed after workflow migrations
-- Document new Python monitoring scripts in OPERATIONS.md
+- Monitor XDA script for duplicate prevention (fixed 2025-11-24)
+- Consider replacing Wazuh→Discord n8n workflow with Python script
+
+### Services Fully Operational
+- ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
+- ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
+- ✅ Checkmk (10.10.10.5) - Enterprise monitoring
+- ✅ BIND9 Primary (10.10.10.4) - DNS authoritative
+- ✅ Pi-hole Primary (10.10.10.22) - DNS filtering
 
 ### Known Issues
-- Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - fix planned)
+- Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - not critical)
 - n8n.ratlm.com showing Google Safe Browsing warning (false positive report submitted)
-
-### Next Steps
-1. Create /usr/local/bin/wazuh_discord.py to replace broken n8n workflow
-2. Evaluate n8n service necessity after Wazuh workflow migration
-3. Document XDA and Wazuh Python scripts in operations documentation
 
 ## Quick Navigation
 
