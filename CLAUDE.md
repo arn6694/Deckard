@@ -11,9 +11,16 @@ This is a homelab operations repository containing scripts and documentation for
 - **Integration**: Home Assistant monitoring via Checkmk
 - **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
 
-## Current Status (Last Updated: 2025-11-24 Evening)
+## Current Status (Last Updated: 2025-11-26 Evening)
 
 ### Recent Work
+- **PiKVM Infrastructure Build COMPLETE (2025-11-26 Evening)**: Full DIY KVM-over-IP deployment
+  - Flashed PiKVM OS and assembled hardware (Pi 4 + Geekworm X630 + PoE HAT)
+  - Configured static IP 10.10.10.14 with pikvm.ratlm.com reverse proxy via NPM
+  - Fixed USB-C OTG configuration and NPM HTTPS redirect loop
+  - Verified full KVM functionality: video, keyboard, mouse, BIOS access to Proxmox
+  - Cost: $44 out-of-pocket (50% savings vs commercial solution)
+  - Full documentation: SESSION_CLOSING_REPORT_PIKVM_BUILD_2025-11-26.md
 - **Wazuh Heartbleed Detection FIXED (2025-11-24 Evening)**: Closed critical 100% detection gap
   - Added `/log/blog/current/notice.log` monitoring (the ONLY file with JSON Zeek/Bro events)
   - Created JSON-compatible rules 100070-100073 for Heartbleed/ShellShock/EternalBlue
@@ -24,14 +31,14 @@ This is a homelab operations repository containing scripts and documentation for
   - Moved `posted.add(link)` to execute BEFORE Discord POST attempt
   - Fixed file ownership issues (root:root → brian:brian for proper logging)
   - Fully documented in docs/OPERATIONS.md
-- Fixed Nginx Proxy Manager (10.10.10.3) - killed orphaned nginx processes, restored full operation
-- Replaced broken n8n XDA→Discord workflow with Python script (Nov 2025)
 
 ### Current Focus
+- Add PiKVM to Checkmk monitoring (health metrics and availability)
+- Test PiKVM emergency scenarios (OS crash recovery, BIOS changes, remote installation)
 - Monitor for next security event to verify Wazuh→n8n→Firewalla end-to-end automation
-- Review Wazuh dashboard for any other undetected attack types
 
 ### Services Fully Operational
+- ✅ PiKVM (10.10.10.14) - KVM-over-IP for Proxmox remote management (pikvm.ratlm.com)
 - ✅ Wazuh IDS Detection - 100% coverage (ALARM_INTEL + ALARM_BRO_NOTICE JSON/text)
 - ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
 - ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
@@ -85,6 +92,7 @@ No manual activation needed - just ask questions about these topics.
 
 ### Infrastructure Components Summary
 - **Checkmk**: 10.10.10.5 (monitoring site)
+- **PiKVM**: 10.10.10.14 (KVM-over-IP - pikvm.ratlm.com)
 - **BIND9 Primary**: 10.10.10.4 (Proxmox LXC 119)
 - **BIND9 Secondary**: 10.10.10.2 (Zeus Docker)
 - **Pi-hole Primary**: 10.10.10.22 (Proxmox LXC 105)
