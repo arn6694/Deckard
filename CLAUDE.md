@@ -11,9 +11,16 @@ This is a homelab operations repository containing scripts and documentation for
 - **Integration**: Home Assistant monitoring via Checkmk
 - **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
 
-## Current Status (Last Updated: 2025-11-26 Evening)
+## Current Status (Last Updated: 2025-11-26 Late Evening)
 
 ### Recent Work
+- **Pi-hole HA Configuration COMPLETE (2025-11-26 Late Evening)**: DNS redundancy fully operational
+  - Synced complete configuration from primary (10.10.10.22) to secondary (10.10.10.25)
+  - Resolved VPN routing conflict preventing external DNS resolution
+  - Implemented persistent static routes via systemd service (bypasses VPN for DNS)
+  - Secondary uses CloudFlare DNS (independent from BIND9 for true redundancy)
+  - Both instances tested and validated - all tests passed
+  - Full documentation: SESSION_CLOSING_REPORT_PIHOLE_SYNC_2025-11-26.md
 - **PiKVM Infrastructure Build COMPLETE (2025-11-26 Evening)**: Full DIY KVM-over-IP deployment
   - Flashed PiKVM OS and assembled hardware (Pi 4 + Geekworm X630 + PoE HAT)
   - Configured static IP 10.10.10.14 with pikvm.ratlm.com reverse proxy via NPM
@@ -33,18 +40,19 @@ This is a homelab operations repository containing scripts and documentation for
   - Fully documented in docs/OPERATIONS.md
 
 ### Current Focus
-- Add PiKVM to Checkmk monitoring (health metrics and availability)
-- Test PiKVM emergency scenarios (OS crash recovery, BIOS changes, remote installation)
-- Monitor for next security event to verify Wazuh→n8n→Firewalla end-to-end automation
+- Test Pi-hole failover scenarios (primary shutdown, measure client failover time)
+- Add both Pi-hole instances to Checkmk monitoring (availability, query metrics, WiFi health)
+- Create comprehensive Pi-hole HA documentation (docs/PIHOLE_HA_CONFIGURATION.md)
+- Verify BIND9 redundancy status (test secondary 10.10.10.2)
 
 ### Services Fully Operational
+- ✅ Pi-hole HA DNS - Primary 10.10.10.22 (LXC) + Secondary 10.10.10.25 (WiFi) - Full redundancy
 - ✅ PiKVM (10.10.10.14) - KVM-over-IP for Proxmox remote management (pikvm.ratlm.com)
 - ✅ Wazuh IDS Detection - 100% coverage (ALARM_INTEL + ALARM_BRO_NOTICE JSON/text)
 - ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
 - ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
 - ✅ Checkmk (10.10.10.5) - Enterprise monitoring
 - ✅ BIND9 Primary (10.10.10.4) - DNS authoritative
-- ✅ Pi-hole Primary (10.10.10.22) - DNS filtering
 
 ### Known Issues
 - Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - not critical)
@@ -96,7 +104,7 @@ No manual activation needed - just ask questions about these topics.
 - **BIND9 Primary**: 10.10.10.4 (Proxmox LXC 119)
 - **BIND9 Secondary**: 10.10.10.2 (Zeus Docker)
 - **Pi-hole Primary**: 10.10.10.22 (Proxmox LXC 105)
-- **Pi-hole Secondary**: 10.10.10.23 (Zeus Docker)
+- **Pi-hole Secondary**: 10.10.10.25 (Raspberry Pi WiFi - HA configuration)
 - **Nginx Proxy Manager**: 10.10.10.3
 - **Home Assistant**: 10.10.10.6
 - **Firewalla**: 10.10.10.1
