@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "youtube": {
+      "command": "npx",
+      "args": ["-y", "@kazuph/mcp-youtube"],
+      "description": "Extract subtitles and metadata from YouTube videos"
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "mcp-obsidian", "/home/brian/Documents/Notes"],
+      "env": {
+        "OBSIDIAN_REST_API_KEY": "OBSIDIAN_API_KEY_REDACTED",
+        "OBSIDIAN_REST_API_URL": "https://localhost:27124",
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+      },
+      "description": "Read and write notes to Obsidian vault"
+    }
+  }
+}

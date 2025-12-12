@@ -2,6 +2,116 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. The documentation is split into focused, topic-specific files for easier navigation.
 
+## Critical: Context and Token Management
+
+**⚠️ IMPORTANT: Token budget is limited - be extremely mindful of context usage.**
+
+### Token Conservation Rules (FOLLOW STRICTLY):
+1. **Use Task tool with specialized agents** for exploratory work:
+   - Use `Explore` agent for "what exists in codebase" questions
+   - Use `code-analysis:detective` for "how does X work" investigations
+   - Use `Plan` agent for architecture/design questions
+   - These agents work in isolated contexts and return summaries
+
+2. **Avoid unnecessary file reads**:
+   - Only read files directly needed for current task
+   - Don't read large config files (history.jsonl, settings.json) unless specifically required
+   - Use grep/glob for precise searches, not general exploration
+
+3. **Don't keep full command outputs**:
+   - Summarize and trim diagnostic outputs
+   - Parse results and include only relevant information
+   - Use `head`, `tail`, `grep` to filter output before returning
+
+4. **Use specialized tools appropriately**:
+   - Grep/Glob only for targeted, specific searches
+   - Bash only for actual system commands
+   - Avoid bash for file operations (use Read/Edit/Write tools)
+   - Never use bash echo/cat to communicate with user
+
+5. **Be cognizant of context accumulation**:
+   - Each file read, each command output, each search result adds to context
+   - Prefer agent delegation over inline investigation
+   - Summarize findings instead of keeping full outputs in context
+   - Clean up and move on from completed diagnostics
+
+### When to Delegate vs. Inline:
+- **Inline**: Simple, targeted file edits or specific command execution
+- **Delegate to Task**: Codebase exploration, research, investigation, architecture questions
+
+## IT Infrastructure Director - Model & Strategy Management
+
+**Role: The Director proactively manages model selection and strategic decisions to optimize cost vs. quality given VERY LIMITED token budget.**
+
+### ⚠️ CURRENT TOKEN CONSTRAINTS (As of today)
+- **Daily budget**: 82% used (18% remaining)
+- **Weekly budget**: 74% used (26% remaining)
+- **Reset**: Daily at 1am ET, Weekly on Dec 15 at 11pm ET
+- **Strategy**: Extremely conservative - prioritize completion of critical tasks only
+
+### Director Decision Protocol
+
+The Director operates under these hard constraints:
+
+1. **Task Complexity Assessment**:
+   - Simple/straightforward → Haiku ONLY
+   - Moderate complexity → Haiku ONLY (with aggressive context optimization)
+   - Complex reasoning/architecture → **Ask if critical** → Sonnet only if approved
+   - Opus → **Director escalates to you - critical decision required**
+
+2. **Context Budget Analysis (STRICT)**:
+   - Remaining weekly tokens (26%) is the hard ceiling
+   - Each task must estimate tokens and justify usage
+   - **Rule: If context < 30% remaining, refuse non-critical work**
+   - Agent delegation MUST be used (no inline exploration)
+   - Summarize all outputs ruthlessly - eliminate any waste
+
+3. **Risk Assessment (CONSERVATIVE)**:
+   - Impact of wrong decision vs. token cost
+   - Can this wait until tomorrow's reset? (Often answer is YES)
+   - Rework on a depleted budget is unacceptable
+   - Only critical infrastructure tasks proceed when low on tokens
+
+### When Director Recommends Model Switch
+
+**Director will ONLY suggest Sonnet when:**
+- ✅ Task is critical and can't wait until tomorrow's reset
+- ✅ Wrong answer would cause operational outage
+- ✅ Task is unfeasible with Haiku given current token budget
+- ✅ Weekly budget can absorb it (26% remaining)
+- ✅ You explicitly approve the Sonnet spend
+
+**Director MANDATES staying with Haiku when:**
+- 🔴 Daily budget < 30% (current state: 18% remaining)
+- 🔴 Work is non-urgent or can be deferred
+- 🔴 Task can be broken into smaller chunks
+- 🔴 Weekly budget is low (current state: 74% used)
+
+### How to Engage the Director
+
+When you ask me a strategic or decision-making question, I will:
+1. **Consult the Director** for recommendation
+2. **Present the analysis** including context impact
+3. **Show the tradeoff** (cost vs. quality vs. context)
+4. **Get your approval** before proceeding
+
+You'll see it as: *"Director recommends: [Model] because [reasoning]. Context impact: [assessment]."*
+
+### Director's Authority
+
+The Director has approval authority for:
+- ✅ Model selection (Haiku → Sonnet → Opus switches)
+- ✅ Task prioritization (what to tackle given token budget)
+- ✅ Infrastructure decisions (when they affect cost/complexity)
+- ✅ Resource allocation (compute, storage, monitoring trade-offs)
+- ✅ Strategic planning (roadmap, next priorities)
+
+The Director escalates to you for:
+- 🔹 Decisions requiring your judgment call
+- 🔹 Budget constraints or spending decisions
+- 🔹 Risk tolerance questions
+- 🔹 Infrastructure changes requiring your approval
+
 ## Repository Overview
 
 This is a homelab operations repository containing scripts and documentation for managing:
@@ -11,9 +121,17 @@ This is a homelab operations repository containing scripts and documentation for
 - **Integration**: Home Assistant monitoring via Checkmk
 - **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
 
-## Current Status (Last Updated: 2025-11-26 Late Evening)
+## Current Status (Last Updated: 2025-12-10)
 
 ### Recent Work
+- **Wazuh GeoIP Dashboard Geo-Visualization COMPLETE (2025-12-10)**: Geographic attack origin tracking
+  - Fixed GeoIP pipeline field mapping (`data.src` → `GeoLocation` enrichment)
+  - Reindexed 2025.12.10 and 2025.12.11 indexes with correct `geo_point` mapping
+  - Updated three geo visualizations with correct field names (.keyword suffix)
+  - Configured OpenStreetMap tiles in wazuh-dashboard.yml
+  - Verified 353+ documents with GeoLocation enrichment working
+  - Dashboard now displays "Attack Origins - World Heatmap" with world map and attack source dots
+  - Full documentation: whats-next.md
 - **Pi-hole HA Configuration COMPLETE (2025-11-26 Late Evening)**: DNS redundancy fully operational
   - Synced complete configuration from primary (10.10.10.22) to secondary (10.10.10.25)
   - Resolved VPN routing conflict preventing external DNS resolution
@@ -49,6 +167,7 @@ This is a homelab operations repository containing scripts and documentation for
 - ✅ Pi-hole HA DNS - Primary 10.10.10.22 (LXC) + Secondary 10.10.10.25 (WiFi) - Full redundancy
 - ✅ PiKVM (10.10.10.14) - KVM-over-IP for Proxmox remote management (pikvm.ratlm.com)
 - ✅ Wazuh IDS Detection - 100% coverage (ALARM_INTEL + ALARM_BRO_NOTICE JSON/text)
+- ✅ Wazuh Geo-Visualization - Geographic attack origin tracking with OpenStreetMap (https://10.10.10.40:443)
 - ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
 - ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
 - ✅ Checkmk (10.10.10.5) - Enterprise monitoring
@@ -69,6 +188,7 @@ This is a homelab operations repository containing scripts and documentation for
 | Perform infrastructure operations | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Task-specific procedures |
 | Debug or troubleshoot issues | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Diagnostics & Fixes |
 | Follow code/doc standards | [`docs/STYLE.md`](docs/STYLE.md) | Guidelines |
+| Work with Wazuh pipelines/visualizations | [`whats-next.md`](whats-next.md) | GeoIP implementation details |
 | Ask about Checkmk | (auto-activates) | `.claude/agents/Checkmk.md` |
 | Ask about DNS/networking | (auto-activates) | `.claude/agents/network_engineer.md` |
 | Ask about Ansible | (auto-activates) | `.claude/agents/ansible.md` |
@@ -97,18 +217,25 @@ No manual activation needed - just ask questions about these topics.
 | Reload BIND9 | `ssh brian@10.10.10.4 'sudo rndc reload'` |
 | Check backup exists | `ls -la /tmp/checkmk_upgrade_backups/` |
 | Test NPM service | `curl -I https://checkmk.ratlm.com` |
+| Access Wazuh Manager (LXC 112) | `ssh brian@10.10.10.17 'sudo pct exec 112 -- <command>'` |
+| Query Wazuh Indexer API | `curl -k -u admin:<password> https://localhost:9200/<endpoint>` (from within LXC 112) |
+| View recent Wazuh alerts | `ssh brian@10.10.10.17 'sudo pct exec 112 -- tail -50 /var/ossec/logs/alerts/alerts.json'` |
+| Access Wazuh Dashboard | https://10.10.10.40:443 (admin / wO+YkeYMcx1I9?9cvHSjis+awMs2XU2H) |
+| Restart Wazuh Dashboard | `ssh brian@10.10.10.17 'sudo pct exec 112 -- systemctl restart wazuh-dashboard'` |
 
 ### Infrastructure Components Summary
 - **Checkmk**: 10.10.10.5 (monitoring site)
 - **PiKVM**: 10.10.10.14 (KVM-over-IP - pikvm.ratlm.com)
+- **Wazuh Manager & Dashboard**: LXC 112 on 10.10.10.17 (Proxmox) - Dashboard at https://10.10.10.40:443
+- **Wazuh Indexer**: LXC 112 - OpenSearch backend at https://localhost:9200 (internal to LXC)
 - **BIND9 Primary**: 10.10.10.4 (Proxmox LXC 119)
 - **BIND9 Secondary**: 10.10.10.2 (Zeus Docker)
 - **Pi-hole Primary**: 10.10.10.22 (Proxmox LXC 105)
 - **Pi-hole Secondary**: 10.10.10.25 (Raspberry Pi WiFi - HA configuration)
 - **Nginx Proxy Manager**: 10.10.10.3
 - **Home Assistant**: 10.10.10.6
-- **Firewalla**: 10.10.10.1
-- **Proxmox**: 10.10.10.17
+- **Firewalla**: 10.10.10.1 (IDS/Threat Intel)
+- **Proxmox**: 10.10.10.17 (hypervisor)
 
 ## Documentation Files
 
