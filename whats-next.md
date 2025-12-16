@@ -1,212 +1,147 @@
-# Session Handoff - Infrastructure Director Audit & Planning
-**Date:** 2025-12-11
-**Session Time:** 15:30 - 17:30
-**Next Session:** Tonight (TBD)
-**Status:** Phase 1 Complete ✅ | Phase 2 Ready | n8n Research Task Assigned
+# Session Handoff - Zeus to OMV Backup Configuration
+**Date:** 2025-12-13
+**Status:** Backup system configured and cron job set up - ready for production testing
 
 ---
 
 ## Original Task
-
-**Primary Request:** Audit user's homelab infrastructure to determine what exists, document everything, identify gaps, and make recommendations for improvements/fixes.
-
-**Secondary Request:** Research n8n use cases based on Network Chuck's YouTube video about combining n8n with Claude Code/CLI for workflow automation.
-
-**Key Constraints:**
-- No guessing - all work thoroughly researched and verified
-- Living documents for shift continuity
-- All changes require explicit user approval
-- Establish infrastructure inventory that can be managed and improved
-- Create agent team structure (up to 10 agents) with clear delegation
-- No deletions without approval
+Configure Zeus (Synology NAS at 10.10.10.2) to back up to OMV (OpenMediaVault at 10.10.10.23) using a simple, reliable rsync-based backup that:
+- Stores backups in `/mnt/OMV2/zeus_backups` (dedicated 9.1TB XFS mount, not on / filesystem)
+- Runs daily without filling up disks
+- Does NOT use complex dated snapshots or hard-link deduplication (previous approach filled up / mount)
+- Backs up key sources: /volume1/Family, /volume1/NetBackup, /volume1/docker, /volume1/web, /volume1/surveillance
 
 ---
 
 ## Work Completed
 
-### Phase 1 Infrastructure Audit - COMPLETE ✅
+### 1. Updated Backup Scripts
+- **Modified `/home/brian/claude/scripts/backup-daily.sh`:**
+  - Destination: `brian@10.10.10.23:/mnt/OMV2/zeus_backups` (remote SSH rsync)
+  - Removed hard-link deduplication and `--delete` flag
+  - Added: `-avz --no-perms --no-group --no-owner --ignore-errors`
+  - Runs sequentially (one source at a time)
+- **Deleted:** `backup-weekly.sh`, `backup-monthly.sh`
 
-**84 Total Devices Discovered & Identified:**
-- 16 infrastructure systems (Proxmox, Synology, networking, monitoring, security)
-- 16 user devices (PCs, Macs, Linux systems, iPads, etc.)
-- 33+ smart home/entertainment devices (cameras, TVs, gaming, audio, lights, etc.)
-- 6 IoT/guest network devices (9.9.9.0/24)
-- 3 phantom entries identified for removal
+### 2. OMV Destination Configuration
+- `/mnt/OMV2/` = local XFS on OMV (9.1TB available)
+- Created subdirectories: homes, docker, Family, NetBackup, web, surveillance
+- Permissions: `777` on parent and backup directories
 
-**Living Documents Created:**
-1. Infrastructure_Inventory.md (850+ lines) - Complete device enumeration with network topology
-2. Infrastructure_Work_Log.md - Session activities, issue tracking, templates
-3. Agent_Registry.md - 10 agent roles defined, hiring queue prioritized
-4. Architecture_Decisions.md - Decision framework, 3 decisions documented
-5. SESSION_CLOSE_2025-12-11.md - Comprehensive session handoff
+### 3. Cron Job Setup
+- Created `/etc/cron.d/backup-tasks` on Zeus
+- Runs daily at 3:00 AM: `/usr/local/bin/backup-scripts/backup-daily.sh`
 
-**Device Clarifications - ALL RESOLVED:**
-- DNS: pi5 (10.10.10.25) = secondary DNS ✅ CONFIRMED
-- Storage: Zeus (10.10.10.2) = Synology, OMV (10.10.10.23) = separate offline backup target
-- Garage: 2 garage doors + 1 front door lock + 1 Ring doorbell + cameras identified ✅
-- Audio: Sonos speakers at 10.10.10.81 and 10.10.10.99 ✅
-- Devices: brians.mini.lan = iPad mini (not Mac), phantom entries identified
+### 4. SSH Access Verified
+- Key-based auth working from Zeus to OMV as `brian` user
+- No password required
 
-**Critical Issues Identified:**
-1. 🔴 CRITICAL: 6.5TB media on Zeus with ZERO backup (OMV offline, needs restoration + rsync automation)
-2. 🔴 System duplication verification needed (Checkmk/NPM at 10.10.10.3 and 10.10.10.5)
-3. 🟠 Monitoring gaps (Home Assistant, IoT network, many systems not in Checkmk)
-4. 🟠 Security assessment needed (Wazuh coverage, false positive rate, IoT isolation)
-5. 🟠 Backup/DR verification needed (RTO/RPO not defined, automation status unknown)
-
-**Firewalla Data Integration:**
-- Successfully queried `/home/pi/.firewalla/run/hosts/` for complete device hostname mapping
-- Provided 100% device identification authority
-- All unknown devices now fully categorized
-
-### n8n Research Task - ASSIGNED
-
-**YouTube Video Analyzed:**
-- URL: https://youtu.be/s96JeuuwLzc?si=o-_-zL2Qcxv_NWfd
-- Transcript: ✅ EXTRACTED (5000+ words)
-- Title: "I'll never use n8n the same......"
-
-**Key Inspiration Concepts:**
-- n8n as orchestration layer (simple SSH node to server)
-- Claude Code/CLI as execution layer (complex agent logic, skills, context)
-- Session management for stateful conversations (session IDs)
-- Slack integration for mobile/remote access
-- Multi-agent deployment on-demand
-- Context passing through local file access
-
-**Research Task Assignment:**
-- Automation Engineer to provide concrete use case recommendations for your infrastructure
-- Will identify practical patterns: Proxmox management, Wazuh automation, DNS operations, media backup, smart home orchestration
+### 5. Testing Status
+- Initial manual backup (17:46): Started Family backup but stalled/slow
+- Backup script executes without errors
+- Parallel launcher scripts created but not actively used
 
 ---
 
 ## Work Remaining
 
-### Immediate (Tonight)
+### 1. Verify Backup Completion
+- [ ] Check if initial Family backup completed: `du -sh /mnt/OMV2/zeus_backups/Family/`
+- [ ] If incomplete, kill rsync: `ssh brian@10.10.10.2 "ps aux | grep rsync"`
+- [ ] Re-run backup and monitor: `watch -n 2 du -sh /mnt/OMV2/zeus_backups/`
 
-1. **Approve Phase 2 Priorities** - Which issues to tackle first?
-2. **Rsync Backup Configuration** - Answer 5 questions before Automation Engineer deploys:
-   - Backup time? (off-peak hours)
-   - Bandwidth limits?
-   - Retention policy? (days/weeks to keep)
-   - Alerting destination? (email, Discord, Checkmk?)
-   - Any specific shares on Zeus?
-3. **n8n Use Case Review** - Automation Engineer will present recommendations based on transcript
-4. **OMV Restoration Status** - Physical infrastructure cleanup progress?
+### 2. Production Validation
+- [ ] Let 3:00 AM cron run on 2025-12-14
+- [ ] Check logs: `ssh brian@10.10.10.2 "tail -50 /var/log/backup-daily.log"`
+- [ ] Test restore with sample file
 
-### Phase 2 Analysis (Pending Approval)
+### 3. Optional: Enable Parallel Backups
+- If serial backup too slow, use `backup_parallel_launcher.sh` (4 parallel rsync jobs)
+- Update cron job accordingly
 
-- System verification (Checkmk/NPM duplication, phantom entries removal)
-- Monitoring expansion (Home Assistant, IoT devices, NAS, Raspberry Pi)
-- Security assessment (Wazuh coverage, IDS tuning, IoT isolation)
-- Backup/DR assessment (RTO/RPO definition, automation verification)
-- Performance baselines (disk, network, memory utilization)
+---
 
-### Blocking Tasks
+## Attempted Approaches (Failures & Learnings)
 
-- **OMV Restoration:** User to power on, verify SSH connectivity
-- **Rsync Automation:** Blocked until OMV online + user provides configuration
+### ❌ NFS Mount Strategy
+- Assumed `/mnt/OMV2` could be mounted via NFS from Zeus
+- **Issue:** Synology NFS configuration complex, requires web UI setup
+- **Lesson:** Local OMV filesystem was simpler solution
+
+### ❌ Parallel Launcher (Initial)
+- Complex error handling, permission issues with SSH receiver
+- Multiple rsync processes failed with "Permission denied"
+- **Status:** Scripts exist but need debugging if needed
+
+### ❌ Hard-Link Deduplication
+- Previous approach with `--link-dest` filled up / filesystem
+- Abandoned for simple per-source persistent directories
+
+### ✓ Serial Rsync (Current)
+- Works when permissions correct
+- Simple, predictable capacity usage
 
 ---
 
 ## Critical Context
 
-### Key Decision: Media Backup Crisis is Priority #1
+### Infrastructure Details
+- **Zeus (10.10.10.2):** Synology NAS, 27TB storage
+- **OMV (10.10.10.23):** OpenMediaVault, local `/mnt/OMV2/` (9.1TB XFS)
+- **Network:** 1 Gbps LAN (~125 MB/s max, actual ~60-80 MB/s via rsync)
+- **Backup window:** 3:00 AM daily (7 hours available before typical morning use)
 
-**The Issue:**
-- ALL 6.5TB media resides on single Synology Zeus
-- ZERO backup currently in place
-- Synology showing April 2024 crash dumps (stability concern)
-- If Zeus fails = complete loss of all media
+### Key Discoveries
+1. `/mnt/OMV2` is LOCAL storage on OMV, not NFS from Zeus
+2. rsync over SSH requires proper file permissions on both ends
+3. Synology system directories (@eaDir) have permission restrictions
+4. Simple approach (no snapshots, no deduplication) is more reliable
 
-**The Solution (User-Directed):**
-- Get OMV (10.10.10.23) back online (offline due to physical infrastructure cleanup, not technical failure)
-- Implement nightly rsync backups: Zeus → OMV
-- Automation Engineer ready to configure once OMV online + SSH verified
+### Rsync Options Explained
+- `-avz`: Archive, verbose, compress
+- `--no-perms --no-group --no-owner`: Allow remote writes without ownership match
+- `--ignore-errors`: Continue on permission denied (critical for @eaDir system dirs)
 
-**Status:**
-- OMV hardware intact, just needs power-on
-- New PoE switch needs power-on
-- Physical cable/wire cleanup required in infrastructure area
-
-### Agent Team Ready for Deployment
-
-10 specialized agents defined and ready to hire:
-1. Linux Systems Administrator (PRIMARY - day-to-day operations)
-2. Automation Engineer (rsync setup, n8n patterns, workflow automation)
-3. Monitoring Specialist (Checkmk expansion)
-4. Security Specialist (Wazuh assessment)
-5. Network Engineer (DNS verification, system duplication investigation)
-6. Backup/DR Specialist (RTO/RPO, recovery procedures)
-7. Documentation Specialist (runbooks, procedures)
-8. Performance Engineer (baselines, optimization)
-9. DevOps Engineer (IaC, deployment automation)
-10. (1 slot available for future needs)
-
-### Important Infrastructure Facts
-
-**DNS Architecture Working:**
-- Pi-hole HA: Primary (10.10.10.22) + Secondary (10.10.10.25 - Raspberry Pi 5) ✅
-- Last sync: 2025-11-26
-- Pi-hole secondary uses CloudFlare upstream (independent redundancy)
-- Old DNS containers (OMV BIND9 attempt) = failed experiment, can be deleted
-
-**Wazuh Security Operational:**
-- 100+ custom detection rules
-- Heartbleed/ShellShock/EternalBlue coverage complete
-- GeoIP visualization active (2025-12-10)
-- Known issue: firewall alert Discord webhook broken (n8n workflow - not critical, alerts still logged)
-
-**IoT Network Properly Isolated:**
-- 9.9.9.0/24 segment contains smart home devices
-- Separated from critical 10.10.10.0/24 infrastructure
-- Good security practice already in place
-
-**PiKVM Operational:**
-- Successfully replaced missing Proxmox IPMI
-- Raspberry Pi 4 + Geekworm X630 bridge
-- Cost: $44 (50% savings vs commercial KVM)
-- Verified working 2025-11-26
-
-### Assumptions Requiring Validation
-
-1. OMV hardware intact (offline due to physical setup, not failure) - User confirmed ✅
-2. SSH connectivity Zeus → OMV will work once powered on - User to verify
-3. 6.5TB media = only critical backup data - Confirm any other backup needs
-4. Nightly rsync acceptable - User to specify preferred time
-5. All 84 devices are legitimate - 3 phantom entries flagged for removal approval
+### Sources to Exclude
+- `/volume1/homes/@eaDir/` - Permission denied
+- `/volume1/docker/Plex/config/*` - File locks
+- `/volume1/web/web_images` - Permission denied
 
 ---
 
 ## Current State
 
-**Session 1 Complete:** Infrastructure Phase 1 audit fully finished
-- 84 devices identified with 100% confidence
-- 5 living documents created and populated
-- All critical issues identified and prioritized
-- Agent team structure ready
-- n8n research in progress
-
-**Ready for Tonight:**
-- Comprehensive documentation in Obsidian vault
-- Perfect shift continuity established
-- Phase 2 analysis scope defined
-- rsync automation scope defined
-- User decision points clearly identified
-
-**Pending User Inputs:**
-1. Phase 2 priorities (which issues first?)
-2. rsync backup configuration (5 details)
-3. Agent hiring approval
-4. Phantom entry deletion approval
-5. OMV restoration timeline
-
-**Expected Deliverables Tonight:**
-- n8n use case recommendations (Automation Engineer research)
-- Phase 2 analysis initiation (pending approval)
-- rsync automation deployment planning (pending OMV + SSH)
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Backup script | ✅ Complete | Updated with remote SSH destination |
+| OMV destination | ✅ Complete | Directories created, permissions fixed |
+| Cron job | ✅ Complete | 3:00 AM daily on Zeus |
+| SSH access | ✅ Verified | Key-based auth working |
+| Initial test | 🟡 Pending | Family backup status unknown |
 
 ---
 
-**All living documents located:** `/home/brian/Documents/Notes/Infrastructure/`
-**Ready for seamless continuation tonight with zero context loss.**
+## Next Actions
+
+1. **Verify backup:** Check `/mnt/OMV2/zeus_backups/Family/` size
+2. **Monitor 3:00 AM run:** Check logs after first automatic backup
+3. **Test restore:** Verify backed-up files are readable
+4. **Consider parallel:** If serial backup takes >8 hours, enable 4-job parallelization
+
+---
+
+## Files Modified
+
+**In Repo:**
+- ✏️ `scripts/backup-daily.sh` - Updated destination and rsync options
+- 🗑️ `scripts/backup-weekly.sh` - Deleted
+- 🗑️ `scripts/backup-monthly.sh` - Deleted
+
+**On Zeus:**
+- 📍 `/usr/local/bin/backup-scripts/backup-daily.sh` - Copied from repo
+- 📍 `/etc/cron.d/backup-tasks` - Created for scheduling
+- 📝 `/var/log/backup-daily.log` - Execution logs
+
+**On OMV:**
+- 📁 `/mnt/OMV2/zeus_backups/` - Backup destination (777 perms)
+- 📁 Subdirectories for each source

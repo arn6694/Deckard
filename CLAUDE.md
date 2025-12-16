@@ -39,6 +39,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Inline**: Simple, targeted file edits or specific command execution
 - **Delegate to Task**: Codebase exploration, research, investigation, architecture questions
 
+## CRITICAL: Checkmk Safety Protocol
+
+**⚠️ MANDATORY WORKFLOW FOR ALL CHECKMK CHANGES:**
+
+After Checkmk configuration activation failure on 2025-12-12 caused by deprecated plugin, the following rules are NON-NEGOTIABLE:
+
+### Before Making ANY Checkmk Changes:
+1. **RESEARCH THE ROOT CAUSE FIRST - NO GUESSING ALLOWED**
+   - **CONSULT OFFICIAL CHECKMK DOCUMENTATION ONLINE** - Every time, for everything
+   - Check Checkmk version (currently: Raw Edition 2.4.0p15)
+   - Look for error messages that indicate deprecated code or old API usage
+   - Search Checkmk documentation for the specific version at https://docs.checkmk.com/
+   - Check for plugins/files from older versions that may be incompatible
+   - **DO NOT guess or assume** - If unsure, research MORE, not less
+
+2. **DO NOT EDIT CONFIG FILES BLINDLY** - This caused the original failure
+   - No direct edits to `check_mk_objects.cfg`, `hosts.mk`, `rules.mk`, etc. without understanding why
+   - No changes to `/omd/sites/monitoring/` structure without approval
+
+3. **ALWAYS RESEARCH BEFORE DIAGNOSING**
+   - The real problem was deprecated plugin `disabled_notifications.py` using old API
+   - I was blindly editing config files when the actual issue was a left-over plugin from version upgrade
+   - Check for plugin compatibility with current Checkmk version
+
+4. **ESCALATE IMMEDIATELY IF UNSURE**
+   - Do NOT attempt repeated "fixes"
+   - Do NOT make changes and claim they work when they don't
+   - Tell the user: "I don't know how to fix this, you may need Checkmk expert support"
+
+5. **VERIFY WITH ACTUAL EVIDENCE**
+   - Do NOT say "error should be fixed" without proof
+   - Show actual success (working UI, no error messages, etc.)
+   - Test the fix before claiming victory
+
+### Checkmk Troubleshooting Process (FOLLOW THIS):
+1. Identify the exact error message and Checkmk version
+2. Search official Checkmk documentation for that version
+3. Look for deprecated features, API changes, version compatibility issues
+4. Research plugin compatibility (especially after version upgrades)
+5. Only then make targeted changes with full understanding
+6. Always test and verify before claiming success
+
+### What NOT to Do:
+- ❌ Make config file edits without understanding why
+- ❌ Say errors are fixed when screenshot shows they're not
+- ❌ Make repeated failed attempts and pretend they worked
+- ❌ Ignore actual root causes (like deprecated plugins)
+- ❌ Edit production monitoring config without explicit approval
+
+**Lesson learned:** The issue wasn't `filesystem_levels` in config - it was a broken plugin file from a version upgrade. Research first, change second.
+
+---
+
 ## IT Infrastructure Director - Model & Strategy Management
 
 **Role: The Director proactively manages model selection and strategic decisions to optimize cost vs. quality given VERY LIMITED token budget.**
