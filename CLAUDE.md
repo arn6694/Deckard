@@ -81,6 +81,47 @@ After Checkmk configuration activation failure on 2025-12-12 caused by deprecate
 5. Only then make targeted changes with full understanding
 6. Always test and verify before claiming success
 
+### MANDATORY: Systematic Investigation Before Asking Questions
+
+**NEVER ask for information you can discover yourself. Exhaust ALL options first:**
+
+1. **Query the actual system state:**
+   - Check DNS: `dig @10.10.10.22 hostname.lan +short` (resolve unknown hostnames)
+   - Verify in Checkmk: `cmk --list-hosts`, `cmk -d <hostname>`, `cmk --check <hostname>`
+   - Check agent status: SSH to host and run `sudo cmk-agent-ctl status`
+   - Review configuration: `grep hostname /omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk`
+
+2. **Check configuration files systematically:**
+   - Read hosts.mk to see what's defined vs. what has IPs
+   - Grep for specific hostnames in all config files
+   - Look for patterns in what's missing (IPs, TLS status, service discovery)
+
+3. **Run diagnostic commands:**
+   - Test connectivity: `ssh hostname 'echo ok'` or `ping hostname`
+   - Check logs: `tail /omd/sites/monitoring/var/log/web.log` for errors
+   - Verify agent output: `cmk -d hostname` shows actual agent data
+   - Check TLS explicitly: `cmk-agent-ctl status` on monitored host
+
+4. **Look for clues in available data:**
+   - Review server configuration files already read (servers.json, inventory.yml, etc.)
+   - Cross-reference multiple sources (DNS, inventory, hosts.mk, actual host status)
+   - Compare old state vs. new state to identify discrepancies
+
+5. **Only THEN ask:**
+   - After running 5+ diagnostic commands
+   - After checking 3+ configuration sources
+   - After systematically eliminating possibilities
+   - Only ask when you've genuinely exhausted investigation options
+
+**Example: Finding jarvis's IP**
+- ❌ WRONG: Ask "what's jarvis's IP?"
+- ✓ RIGHT: `dig @10.10.10.22 jarvis.lan +short` → immediately get answer
+
+**Anti-pattern to avoid:**
+- Don't assume something is missing/wrong → verify first
+- Don't ask when you can SSH and run `status` commands
+- Don't give up after 1-2 commands → exhaust all options
+
 ### What NOT to Do:
 - ❌ Make config file edits without understanding why
 - ❌ Say errors are fixed when screenshot shows they're not
@@ -442,11 +483,15 @@ The following specialized agents are available and will auto-activate when relev
 
 ### Project-Specific Agents (`.claude/agents/` in this repository)
 - **`Checkmk.md`** - Checkmk monitoring, alerts, APIs, checks (auto-activates on Checkmk questions)
+  - **✨ NEW:** Use the **Checkmk Expert Skill** (`./.claude/skills/checkmk/`) instead - comprehensive domain expertise with research protocols, safety checks, and systematic troubleshooting
 - **`network_engineer.md`** - DNS, BIND9, Pi-hole, networking (auto-activates on network questions)
 - **`ansible.md`** - Ansible automation, infrastructure-as-code (auto-activates on Ansible questions)
 - **`black-friday-shopper.md`** - Deal hunting and gift recommendations with price comparison across retailers
 - **`brutal-critic.md`** - Ruthless technical critique with framework-based feedback
 - **`session_closer.md`** - Session management for wrapping up work sessions
+
+### Project-Specific Skills (`./.claude/skills/`)
+- **`checkmk/`** - Comprehensive Checkmk 2.4.0p15 expertise with 7 workflows, research protocols, safety checks, troubleshooting methodology, and extensive reference materials (see Custom Prompts and Skills Registry below)
 
 ### Global Agents (`~/.claude/agents/`)
 - **`Python-Instructor.md`** - Python advice, tips, and best practices (auto-activates on Python questions)
@@ -455,6 +500,101 @@ The following specialized agents are available and will auto-activate when relev
 ## Custom Prompts and Skills Registry
 
 This section documents all custom prompts, agents, and skills created for this repository. Use this as a reference when you need specialized functionality.
+
+### Checkmk Expert Skill
+
+**File:** `./.claude/skills/checkmk/`
+
+**Purpose:** Comprehensive Checkmk 2.4.0p15 domain expertise with mandatory research protocols, safety checks, and systematic troubleshooting. Prevents configuration failures and ensures all actions are grounded in official documentation.
+
+**When to Use:**
+- Adding or managing Checkmk hosts (new host, modify IP, remove host)
+- Troubleshooting monitoring issues (host not visible, services missing, agent problems)
+- Configuring services and monitoring rules (service discovery, check parameters, alerts)
+- Using REST API for automation (add hosts, discover services, activate changes)
+- Fixing configuration problems (WATO sync issues, plugin errors, activation failures)
+- Learning Checkmk concepts (architecture, workflows, how monitoring works)
+
+**How to Activate:**
+Just mention any Checkmk task or question:
+- "Add dns01 host to Checkmk monitoring"
+- "Fix services not being discovered"
+- "Troubleshoot agent connectivity issue"
+- "Explain how Checkmk monitoring works"
+- "Automate host addition via REST API"
+
+**What It Does:**
+- Routes to appropriate workflow based on your task (7 comprehensive workflows)
+- Enforces research-first protocol: consults docs.checkmk.com and GitHub docs before any action
+- Provides step-by-step procedures with built-in safety checks
+- Includes diagnostic methodology for systematic troubleshooting
+- Provides reference materials on configuration files, errors, architecture
+- Prevents repeat of past failures (2025-12-12 plugin incompatibility, dns01 struggles)
+- Requires evidence-based verification (not just assumptions)
+
+**Workflows Included:**
+1. **add-host.md** - Step-by-step: add new host with agent installation and service discovery
+2. **manage-host.md** - Modify existing host or remove from monitoring
+3. **troubleshoot.md** - Systematic diagnostic methodology for issues
+4. **manage-services.md** - Service discovery, monitoring rules, alert configuration
+5. **use-rest-api.md** - REST API operations with Python examples
+6. **fix-configuration.md** - Configuration issues, activation failures, WATO sync
+7. **learn-checkmk.md** - Understand Checkmk concepts and architecture
+
+**Reference Materials Included:**
+- **checkmk-api-guide.md** - Complete REST API reference with examples
+- **configuration-file-formats.md** - hosts.mk, rules.mk, contacts.mk syntax and structure
+- **error-diagnosis.md** - Common error messages and their meanings
+- **common-issues.md** - Frequent problems with solutions
+- **checkmk-architecture.md** - System design, data flow, components
+
+**Key Features:**
+- ✅ Research-first: Always consults official Checkmk documentation before action
+- ✅ Safety checks: Mandatory validation before configuration changes
+- ✅ Systematic troubleshooting: Diagnostic procedures instead of blind fixes
+- ✅ Evidence-based: Requires proof that fixes actually work
+- ✅ Version-aware: 2.4.0p15 specific guidance
+- ✅ Escalation path: Clear when to ask for help instead of guessing
+- ✅ Lesson-learned: Prevents past failures (deprecated plugins, WATO sync, verification issues)
+
+**Example Usage:**
+
+User: "Add a new host called 'monitoring-backup' with IP 10.10.10.52 to Checkmk"
+
+Skill response: Routes to **workflows/add-host.md**
+1. Research requirements for 2.4.0p15 host addition
+2. Check agent compatibility and installation method
+3. Gather host details (hostname, IP, network connectivity)
+4. Install agent on target host
+5. Configure in Checkmk hosts.mk
+6. Validate syntax before activation
+7. Run service discovery
+8. Verify with actual evidence (cmk --check, service list)
+
+User: "Services not being discovered on dns01"
+
+Skill response: Routes to **workflows/troubleshoot.md**
+1. Identify exact problem: Is host visible? Is agent responding?
+2. Diagnose systematically: Network → Agent → Configuration → Plugin
+3. Research in docs.checkmk.com for your version
+4. Make one change at a time
+5. Verify with evidence before proceeding
+
+**Important Server Details (Pre-loaded):**
+- Checkmk server: 10.10.10.5
+- Site: monitoring
+- Version: 2.4.0p15
+- API user: automation
+- API secret: %*URahF3Q6dul6sd
+- Config files: /omd/sites/monitoring/etc/check_mk/conf.d/wato/
+
+**Related Documentation:**
+- Full README: `./.claude/skills/checkmk/README.md`
+- Official Docs: https://docs.checkmk.com/2.4.0p15/en/
+- GitHub Docs: https://github.com/Checkmk/checkmk-docs
+- REST API: https://docs.checkmk.com/2.4.0p15/en/rest_api.html
+
+---
 
 ### YouTube Transcript Extraction
 
