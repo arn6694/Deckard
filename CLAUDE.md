@@ -391,6 +391,14 @@ curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/activate_changes" \
 - **User definitions:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/contacts.mk`
 - **Rules configuration:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/rules.mk`
 
+#### Technitium DNS Monitoring (Consolidated to Zeus)
+- **Note (2025-12-29):** dns02 (Technitium DNS Backup) was consolidated into zeus monitoring
+- **Reason:** Both share IP 10.10.10.2; Zeus agent detects Technitium DNS container via systemd monitoring
+- **Technitium Primary (dns01):** 10.10.10.22 (LXC 118 on Proxmox) - Monitored with cmk-agent v2.4.0p15
+- **Technitium Backup:** Running as Docker container on Zeus - Monitored via Zeus agent systemd_units section
+- **Container Detection:** Checkmk's agent sees: `/usr/bin/dotnet /opt/technitium/dns/DnsServerApp.dll /etc/dns`
+- **Result:** Single host (zeus) monitors both Technitium instances + full system metrics
+
 ### Infrastructure Components Summary
 - **Firewalla**: 10.10.10.1 (IDS/Threat Intel)
 - **Zeus**: 10.10.10.2 (Synology NAS - centralized storage for ebooks, backups, media; Technitium DNS Backup container)
