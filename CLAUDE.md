@@ -211,20 +211,24 @@ This is a homelab operations repository containing scripts and documentation for
   - Fully documented in docs/OPERATIONS.md
 
 ### Current Focus
-- Test Pi-hole failover scenarios (primary shutdown, measure client failover time)
-- Add both Pi-hole instances to Checkmk monitoring (availability, query metrics, WiFi health)
-- Create comprehensive Pi-hole HA documentation (docs/PIHOLE_HA_CONFIGURATION.md)
-- Verify BIND9 redundancy status (test secondary 10.10.10.2)
+- **Tier 1 Checkmk Integration**: Proxmox host, LXC containers, Technitium DNS HA, Zeus NFS monitoring
+- Integrate Technitium monitoring (Primary 10.10.10.22 + Backup on Zeus 10.10.10.2) with failover detection
+- Create comprehensive Technitium HA documentation in docs/OPERATIONS.md
+- Develop Checkmk dashboards for infrastructure visibility
 
 ### Services Fully Operational
-- ✅ Pi-hole HA DNS - Primary 10.10.10.22 (LXC) + Secondary 10.10.10.25 (WiFi) - Full redundancy
+- ✅ Technitium HA DNS - Primary 10.10.10.22 (Proxmox LXC) + Backup on Zeus 10.10.10.2 (container) - Full redundancy
 - ✅ PiKVM (10.10.10.14) - KVM-over-IP for Proxmox remote management (pikvm.ratlm.com)
 - ✅ Wazuh IDS Detection - 100% coverage (ALARM_INTEL + ALARM_BRO_NOTICE JSON/text)
 - ✅ Wazuh Geo-Visualization - Geographic attack origin tracking with OpenStreetMap (https://10.10.10.40:443)
 - ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
 - ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
-- ✅ Checkmk (10.10.10.5) - Enterprise monitoring
-- ✅ BIND9 Primary (10.10.10.4) - DNS authoritative
+- ✅ Checkmk (10.10.10.5) - Enterprise monitoring (Tier 1 integration in progress)
+- ✅ Calibre-Web (10.10.10.44) - Ebook management system with Zeus NFS mount at /mnt/ebooks
+
+### Deprecated Services
+- ⛔ Pi-hole DNS (10.10.10.22 primary, 10.10.10.25 secondary) - **Replaced by Technitium DNS**
+- ⛔ BIND9 Primary (10.10.10.4) - **Replaced by Technitium DNS**
 
 ### Known Issues
 - Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - not critical)
@@ -250,7 +254,7 @@ This is a homelab operations repository containing scripts and documentation for
 
 These agents activate automatically when relevant questions are asked:
 - **`Checkmk.md`** - Checkmk monitoring, alerts, APIs, checks
-- **`network_engineer.md`** - DNS, BIND9, Pi-hole, networking infrastructure
+- **`network_engineer.md`** - DNS (Technitium), networking infrastructure, Pi-hole/BIND9 legacy reference
 - **`ansible.md`** - Ansible automation, infrastructure-as-code, playbooks
 
 No manual activation needed - just ask questions about these topics.
@@ -263,11 +267,13 @@ No manual activation needed - just ask questions about these topics.
 | Validate script syntax | `bash -n script.sh` |
 | Check Checkmk version | `sudo su - monitoring -c 'omd version'` |
 | Test host connectivity | `ssh brian@<host> 'echo ok'` |
-| Test DNS resolution | `dig @10.10.10.4 hostname.lan +short` |
+| Test DNS resolution (Technitium Primary) | `dig @10.10.10.22 hostname.lan +short` |
+| Test DNS resolution (Technitium Backup) | `dig @10.10.10.2 hostname.lan +short` |
 | Force service discovery | `sudo su - monitoring -c 'cmk -I <hostname>'` |
 | Check agent version (Debian) | `ssh brian@<host> 'dpkg -l \| grep check-mk-agent'` |
 | View Checkmk logs | `tail /tmp/checkmk_upgrade_*.log` |
-| Reload BIND9 | `ssh brian@10.10.10.4 'sudo rndc reload'` |
+| Access Technitium Primary | `http://10.10.10.22:5380` (web interface) |
+| Access Technitium Backup (Zeus) | `http://10.10.10.2:5380` (web interface) |
 | Check backup exists | `ls -la /tmp/checkmk_upgrade_backups/` |
 | Test NPM service | `curl -I https://checkmk.ratlm.com` |
 | Access Wazuh Manager (LXC 112) | `ssh brian@10.10.10.17 'sudo pct exec 112 -- <command>'` |
@@ -275,20 +281,129 @@ No manual activation needed - just ask questions about these topics.
 | View recent Wazuh alerts | `ssh brian@10.10.10.17 'sudo pct exec 112 -- tail -50 /var/ossec/logs/alerts/alerts.json'` |
 | Access Wazuh Dashboard | https://10.10.10.40:443 (admin / wO+YkeYMcx1I9?9cvHSjis+awMs2XU2H) |
 | Restart Wazuh Dashboard | `ssh brian@10.10.10.17 'sudo pct exec 112 -- systemctl restart wazuh-dashboard'` |
+| Access Calibre-Web | http://10.10.10.44:8083 (will be proxied via NPM later with calibre-web.ratlm.com) |
+| Restart Calibre-Web | `ssh brian@10.10.10.17 'sudo pct exec 121 -- systemctl restart calibre-web'` |
+| Check Calibre-Web logs | `ssh brian@10.10.10.17 'sudo pct exec 121 -- tail -50 /opt/calibre-web/calibre-web.log'` |
+| Ebook library path (container) | `/mnt/ebooks` (NFS mounted from Zeus 10.10.10.2:/volume1/ebooks) |
+
+### Checkmk Authentication & API Credentials
+
+**⚠️ CRITICAL: These credentials are for API automation. Keep secure and treat like passwords.**
+
+#### Automation User (General API Access)
+- **Username:** `automation`
+- **API Secret:** `%*URahF3Q6dul6sd`
+- **Secret File:** `/omd/sites/monitoring/var/check_mk/web/automation/automation.secret`
+- **Role:** `admin` (full permissions)
+- **Use For:** REST API calls, host management, service discovery, general Checkmk automation
+- **Authentication:** Bearer token or HTTP Basic Auth
+- **Server:** 10.10.10.5
+- **Site:** monitoring
+- **API URL:** `http://10.10.10.5/monitoring/check_mk/api/1.0/`
+
+**Example Usage (curl):**
+```bash
+# Bearer token method
+curl -X GET "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
+  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
+  -H "Accept: application/json"
+
+# HTTP Basic Auth method
+curl -X GET "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
+  -H "Authorization: Basic YXV0b21hdGlvbjolKlVSYWhGM1E2ZHVsNnNk" \
+  -H "Accept: application/json"
+```
+
+#### Agent Registration User (Agent Enrollment Only)
+- **Username:** `agent_registration`
+- **API Secret:** `NP6zomCvrmfRY04wPWpZucWLb/sHqnOr`
+- **Secret File:** `/omd/sites/monitoring/var/check_mk/web/agent_registration/automation.secret`
+- **Role:** `agent_registration` (restricted to agent registration only)
+- **Use For:** Agent registration/enrollment, agent controller registration
+- **Authentication:** Bearer token or HTTP Basic Auth
+- **Server:** 10.10.10.5
+- **Site:** monitoring
+
+**Example Usage (Ansible):**
+```bash
+# For agent deployment with API calls
+export CHECKMK_SERVER="10.10.10.5"
+export CHECKMK_SITE="monitoring"
+export CHECKMK_AUTOMATION_USER="automation"
+export CHECKMK_AUTOMATION_SECRET="%*URahF3Q6dul6sd"
+```
+
+**Example Usage (Agent Registration):**
+```bash
+# Register agent with server
+cmk-agent-ctl register \
+  --hostname myhost \
+  --server 10.10.10.5 \
+  --site monitoring \
+  --user agent_registration \
+  --password "NP6zomCvrmfRY04wPWpZucWLb/sHqnOr" \
+  --trust-cert
+```
+
+#### REST API Examples
+
+**List all hosts:**
+```bash
+curl -s -H "Authorization: Bearer %*URahF3Q6dul6sd" \
+  "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" | jq .
+```
+
+**Add a new host:**
+```bash
+curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
+  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "host_name": "myhost",
+    "folder": "/",
+    "attributes": {
+      "ipaddress": "10.10.10.100"
+    }
+  }'
+```
+
+**Discover services on host:**
+```bash
+curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts/myhost/actions/discover_services/invoke" \
+  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "new"}'
+```
+
+**Activate changes:**
+```bash
+curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/activate_changes" \
+  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
+  -H "Content-Type: application/json" \
+  -d '{"redirect": false, "sites": ["monitoring"]}'
+```
+
+#### Configuration File Locations
+- **User passwords:** `/omd/sites/monitoring/etc/htpasswd` (bcrypt hashes)
+- **Automation secret:** `/omd/sites/monitoring/var/check_mk/web/automation/automation.secret`
+- **Agent registration secret:** `/omd/sites/monitoring/var/check_mk/web/agent_registration/automation.secret`
+- **Host configuration:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk`
+- **User definitions:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/contacts.mk`
+- **Rules configuration:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/rules.mk`
 
 ### Infrastructure Components Summary
+- **Firewalla**: 10.10.10.1 (IDS/Threat Intel)
+- **Zeus**: 10.10.10.2 (Synology NAS - centralized storage for ebooks, backups, media; Technitium DNS Backup container)
+- **Nginx Proxy Manager**: 10.10.10.3
 - **Checkmk**: 10.10.10.5 (monitoring site)
+- **Home Assistant**: 10.10.10.6
 - **PiKVM**: 10.10.10.14 (KVM-over-IP - pikvm.ratlm.com)
+- **Proxmox**: 10.10.10.17 (hypervisor)
+- **Technitium DNS Primary**: 10.10.10.22 (Proxmox LXC) - HA configuration
+- **Technitium DNS Backup**: Zeus 10.10.10.2 (container) - HA configuration
 - **Wazuh Manager & Dashboard**: LXC 112 on 10.10.10.17 (Proxmox) - Dashboard at https://10.10.10.40:443
 - **Wazuh Indexer**: LXC 112 - OpenSearch backend at https://localhost:9200 (internal to LXC)
-- **BIND9 Primary**: 10.10.10.4 (Proxmox LXC 119)
-- **BIND9 Secondary**: 10.10.10.2 (Zeus Docker)
-- **Pi-hole Primary**: 10.10.10.22 (Proxmox LXC 105)
-- **Pi-hole Secondary**: 10.10.10.25 (Raspberry Pi WiFi - HA configuration)
-- **Nginx Proxy Manager**: 10.10.10.3
-- **Home Assistant**: 10.10.10.6
-- **Firewalla**: 10.10.10.1 (IDS/Threat Intel)
-- **Proxmox**: 10.10.10.17 (hypervisor)
+- **Calibre-Web**: CT 121 on 10.10.10.44 (LXC) - Ebook management at http://10.10.10.44:8083 (access via NPM later)
 
 ## Documentation Files
 
