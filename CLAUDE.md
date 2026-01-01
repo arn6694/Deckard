@@ -1,810 +1,140 @@
 # CLAUDE.md - Repository Guidance
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. The documentation is split into focused, topic-specific files for easier navigation.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Critical: Context and Token Management
 
-**⚠️ IMPORTANT: Token budget is limited - be extremely mindful of context usage.**
+**Token budget is limited - be mindful of context usage.**
 
-### Token Conservation Rules (FOLLOW STRICTLY):
-1. **Use Task tool with specialized agents** for exploratory work:
-   - Use `Explore` agent for "what exists in codebase" questions
-   - Use `code-analysis:detective` for "how does X work" investigations
-   - Use `Plan` agent for architecture/design questions
-   - These agents work in isolated contexts and return summaries
-
-2. **Avoid unnecessary file reads**:
-   - Only read files directly needed for current task
-   - Don't read large config files (history.jsonl, settings.json) unless specifically required
-   - Use grep/glob for precise searches, not general exploration
-
-3. **Don't keep full command outputs**:
-   - Summarize and trim diagnostic outputs
-   - Parse results and include only relevant information
-   - Use `head`, `tail`, `grep` to filter output before returning
-
-4. **Use specialized tools appropriately**:
-   - Grep/Glob only for targeted, specific searches
-   - Bash only for actual system commands
-   - Avoid bash for file operations (use Read/Edit/Write tools)
-   - Never use bash echo/cat to communicate with user
-
-5. **Be cognizant of context accumulation**:
-   - Each file read, each command output, each search result adds to context
-   - Prefer agent delegation over inline investigation
-   - Summarize findings instead of keeping full outputs in context
-   - Clean up and move on from completed diagnostics
+### Token Conservation Rules:
+1. **Use Task tool with specialized agents** for exploratory work (Explore, Plan, code-analysis:detective)
+2. **Avoid unnecessary file reads** - only read files directly needed for current task
+3. **Summarize outputs** - don't keep full command outputs in context
+4. **Use specialized tools** - Grep/Glob for searches, Read/Edit/Write for files (not bash)
+5. **Delegate exploration** - prefer agent delegation over inline investigation
 
 ### When to Delegate vs. Inline:
 - **Inline**: Simple, targeted file edits or specific command execution
 - **Delegate to Task**: Codebase exploration, research, investigation, architecture questions
 
-## CRITICAL: Checkmk Safety Protocol
-
-**⚠️ MANDATORY WORKFLOW FOR ALL CHECKMK CHANGES:**
-
-After Checkmk configuration activation failure on 2025-12-12 caused by deprecated plugin, the following rules are NON-NEGOTIABLE:
-
-### Before Making ANY Checkmk Changes:
-1. **RESEARCH THE ROOT CAUSE FIRST - NO GUESSING ALLOWED**
-   - **CONSULT OFFICIAL CHECKMK DOCUMENTATION ONLINE** - Every time, for everything
-   - Check Checkmk version (currently: Raw Edition 2.4.0p15)
-   - Look for error messages that indicate deprecated code or old API usage
-   - Search Checkmk documentation for the specific version at https://docs.checkmk.com/
-   - Check for plugins/files from older versions that may be incompatible
-   - **DO NOT guess or assume** - If unsure, research MORE, not less
-
-2. **DO NOT EDIT CONFIG FILES BLINDLY** - This caused the original failure
-   - No direct edits to `check_mk_objects.cfg`, `hosts.mk`, `rules.mk`, etc. without understanding why
-   - No changes to `/omd/sites/monitoring/` structure without approval
-
-3. **ALWAYS RESEARCH BEFORE DIAGNOSING**
-   - The real problem was deprecated plugin `disabled_notifications.py` using old API
-   - I was blindly editing config files when the actual issue was a left-over plugin from version upgrade
-   - Check for plugin compatibility with current Checkmk version
-
-4. **ESCALATE IMMEDIATELY IF UNSURE**
-   - Do NOT attempt repeated "fixes"
-   - Do NOT make changes and claim they work when they don't
-   - Tell the user: "I don't know how to fix this, you may need Checkmk expert support"
-
-5. **VERIFY WITH ACTUAL EVIDENCE**
-   - Do NOT say "error should be fixed" without proof
-   - Show actual success (working UI, no error messages, etc.)
-   - Test the fix before claiming victory
-
-### Checkmk Troubleshooting Process (FOLLOW THIS):
-1. Identify the exact error message and Checkmk version
-2. Search official Checkmk documentation for that version
-3. Look for deprecated features, API changes, version compatibility issues
-4. Research plugin compatibility (especially after version upgrades)
-5. Only then make targeted changes with full understanding
-6. Always test and verify before claiming success
-
-### MANDATORY: Systematic Investigation Before Asking Questions
-
-**NEVER ask for information you can discover yourself. Exhaust ALL options first:**
-
-1. **Query the actual system state:**
-   - Check DNS: `dig @10.10.10.22 hostname.lan +short` (resolve unknown hostnames)
-   - Verify in Checkmk: `cmk --list-hosts`, `cmk -d <hostname>`, `cmk --check <hostname>`
-   - Check agent status: SSH to host and run `sudo cmk-agent-ctl status`
-   - Review configuration: `grep hostname /omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk`
-
-2. **Check configuration files systematically:**
-   - Read hosts.mk to see what's defined vs. what has IPs
-   - Grep for specific hostnames in all config files
-   - Look for patterns in what's missing (IPs, TLS status, service discovery)
-
-3. **Run diagnostic commands:**
-   - Test connectivity: `ssh hostname 'echo ok'` or `ping hostname`
-   - Check logs: `tail /omd/sites/monitoring/var/log/web.log` for errors
-   - Verify agent output: `cmk -d hostname` shows actual agent data
-   - Check TLS explicitly: `cmk-agent-ctl status` on monitored host
-
-4. **Look for clues in available data:**
-   - Review server configuration files already read (servers.json, inventory.yml, etc.)
-   - Cross-reference multiple sources (DNS, inventory, hosts.mk, actual host status)
-   - Compare old state vs. new state to identify discrepancies
-
-5. **Only THEN ask:**
-   - After running 5+ diagnostic commands
-   - After checking 3+ configuration sources
-   - After systematically eliminating possibilities
-   - Only ask when you've genuinely exhausted investigation options
-
-**Example: Finding jarvis's IP**
-- ❌ WRONG: Ask "what's jarvis's IP?"
-- ✓ RIGHT: `dig @10.10.10.22 jarvis.lan +short` → immediately get answer
-
-**Anti-pattern to avoid:**
-- Don't assume something is missing/wrong → verify first
-- Don't ask when you can SSH and run `status` commands
-- Don't give up after 1-2 commands → exhaust all options
-
-### What NOT to Do:
-- ❌ Make config file edits without understanding why
-- ❌ Say errors are fixed when screenshot shows they're not
-- ❌ Make repeated failed attempts and pretend they worked
-- ❌ Ignore actual root causes (like deprecated plugins)
-- ❌ Edit production monitoring config without explicit approval
-
-**Lesson learned:** The issue wasn't `filesystem_levels` in config - it was a broken plugin file from a version upgrade. Research first, change second.
-
 ---
-
-## IT Infrastructure Director - Model & Strategy Management
-
-**Role: The Director proactively manages model selection and strategic decisions to optimize cost vs. quality given VERY LIMITED token budget.**
-
-### ⚠️ CURRENT TOKEN CONSTRAINTS (As of today)
-- **Daily budget**: 82% used (18% remaining)
-- **Weekly budget**: 74% used (26% remaining)
-- **Reset**: Daily at 1am ET, Weekly on Dec 15 at 11pm ET
-- **Strategy**: Extremely conservative - prioritize completion of critical tasks only
-
-### Director Decision Protocol
-
-The Director operates under these hard constraints:
-
-1. **Task Complexity Assessment**:
-   - Simple/straightforward → Haiku ONLY
-   - Moderate complexity → Haiku ONLY (with aggressive context optimization)
-   - Complex reasoning/architecture → **Ask if critical** → Sonnet only if approved
-   - Opus → **Director escalates to you - critical decision required**
-
-2. **Context Budget Analysis (STRICT)**:
-   - Remaining weekly tokens (26%) is the hard ceiling
-   - Each task must estimate tokens and justify usage
-   - **Rule: If context < 30% remaining, refuse non-critical work**
-   - Agent delegation MUST be used (no inline exploration)
-   - Summarize all outputs ruthlessly - eliminate any waste
-
-3. **Risk Assessment (CONSERVATIVE)**:
-   - Impact of wrong decision vs. token cost
-   - Can this wait until tomorrow's reset? (Often answer is YES)
-   - Rework on a depleted budget is unacceptable
-   - Only critical infrastructure tasks proceed when low on tokens
-
-### When Director Recommends Model Switch
-
-**Director will ONLY suggest Sonnet when:**
-- ✅ Task is critical and can't wait until tomorrow's reset
-- ✅ Wrong answer would cause operational outage
-- ✅ Task is unfeasible with Haiku given current token budget
-- ✅ Weekly budget can absorb it (26% remaining)
-- ✅ You explicitly approve the Sonnet spend
-
-**Director MANDATES staying with Haiku when:**
-- 🔴 Daily budget < 30% (current state: 18% remaining)
-- 🔴 Work is non-urgent or can be deferred
-- 🔴 Task can be broken into smaller chunks
-- 🔴 Weekly budget is low (current state: 74% used)
-
-### How to Engage the Director
-
-When you ask me a strategic or decision-making question, I will:
-1. **Consult the Director** for recommendation
-2. **Present the analysis** including context impact
-3. **Show the tradeoff** (cost vs. quality vs. context)
-4. **Get your approval** before proceeding
-
-You'll see it as: *"Director recommends: [Model] because [reasoning]. Context impact: [assessment]."*
-
-### Director's Authority
-
-The Director has approval authority for:
-- ✅ Model selection (Haiku → Sonnet → Opus switches)
-- ✅ Task prioritization (what to tackle given token budget)
-- ✅ Infrastructure decisions (when they affect cost/complexity)
-- ✅ Resource allocation (compute, storage, monitoring trade-offs)
-- ✅ Strategic planning (roadmap, next priorities)
-
-The Director escalates to you for:
-- 🔹 Decisions requiring your judgment call
-- 🔹 Budget constraints or spending decisions
-- 🔹 Risk tolerance questions
-- 🔹 Infrastructure changes requiring your approval
 
 ## Repository Overview
 
-This is a homelab operations repository containing scripts and documentation for managing:
-- **Monitoring**: Enterprise monitoring via Checkmk 2.4 and Wazuh security monitoring
-- **DNS**: Pi-hole DNS/ad-blocking with BIND9 authoritative DNS
+Homelab operations repository containing scripts and documentation for:
+- **Monitoring**: Checkmk 2.4 and Wazuh security monitoring
+- **DNS**: Technitium DNS (Primary 10.10.10.22, Backup on Zeus 10.10.10.2)
 - **Services**: Nginx Proxy Manager for reverse proxy and SSL/TLS
 - **Integration**: Home Assistant monitoring via Checkmk
-- **Automation**: Python-based monitoring workflows (XDA article tracking, Wazuh alerts)
 
 ## Current Status (Last Updated: 2025-12-10)
 
-### Recent Work
-- **Wazuh GeoIP Dashboard Geo-Visualization COMPLETE (2025-12-10)**: Geographic attack origin tracking
-  - Fixed GeoIP pipeline field mapping (`data.src` → `GeoLocation` enrichment)
-  - Reindexed 2025.12.10 and 2025.12.11 indexes with correct `geo_point` mapping
-  - Updated three geo visualizations with correct field names (.keyword suffix)
-  - Configured OpenStreetMap tiles in wazuh-dashboard.yml
-  - Verified 353+ documents with GeoLocation enrichment working
-  - Dashboard now displays "Attack Origins - World Heatmap" with world map and attack source dots
-  - Full documentation: whats-next.md
-- **Pi-hole HA Configuration COMPLETE (2025-11-26 Late Evening)**: DNS redundancy fully operational
-  - Synced complete configuration from primary (10.10.10.22) to secondary (10.10.10.25)
-  - Resolved VPN routing conflict preventing external DNS resolution
-  - Implemented persistent static routes via systemd service (bypasses VPN for DNS)
-  - Secondary uses CloudFlare DNS (independent from BIND9 for true redundancy)
-  - Both instances tested and validated - all tests passed
-  - Full documentation: SESSION_CLOSING_REPORT_PIHOLE_SYNC_2025-11-26.md
-- **PiKVM Infrastructure Build COMPLETE (2025-11-26 Evening)**: Full DIY KVM-over-IP deployment
-  - Flashed PiKVM OS and assembled hardware (Pi 4 + Geekworm X630 + PoE HAT)
-  - Configured static IP 10.10.10.14 with pikvm.ratlm.com reverse proxy via NPM
-  - Fixed USB-C OTG configuration and NPM HTTPS redirect loop
-  - Verified full KVM functionality: video, keyboard, mouse, BIOS access to Proxmox
-  - Cost: $44 out-of-pocket (50% savings vs commercial solution)
-  - Full documentation: SESSION_CLOSING_REPORT_PIKVM_BUILD_2025-11-26.md
-- **Wazuh Heartbleed Detection FIXED (2025-11-24 Evening)**: Closed critical 100% detection gap
-  - Added `/log/blog/current/notice.log` monitoring (the ONLY file with JSON Zeek/Bro events)
-  - Created JSON-compatible rules 100070-100073 for Heartbleed/ShellShock/EternalBlue
-  - Fixed log_format settings (JSON for notice.log, syslog for text logs)
-  - Verified 100% detection on historical attacks, 0 false positives
-  - Full documentation: docs/WAZUH_HEARTBLEED_DETECTION_FIX_2025-11-24.md
-- **XDA Monitoring Fixed (2025-11-24)**: Fixed critical duplicate detection bug in XDA→Discord script on 10.10.10.52
-  - Moved `posted.add(link)` to execute BEFORE Discord POST attempt
-  - Fixed file ownership issues (root:root → brian:brian for proper logging)
-  - Fully documented in docs/OPERATIONS.md
-
-### Current Focus
-- **Tier 1 Checkmk Integration**: Proxmox host, LXC containers, Technitium DNS HA, Zeus NFS monitoring
-- Integrate Technitium monitoring (Primary 10.10.10.22 + Backup on Zeus 10.10.10.2) with failover detection
-- Create comprehensive Technitium HA documentation in docs/OPERATIONS.md
-- Develop Checkmk dashboards for infrastructure visibility
-
 ### Services Fully Operational
-- ✅ Technitium HA DNS - Primary 10.10.10.22 (Proxmox LXC) + Backup on Zeus 10.10.10.2 (container) - Full redundancy
-- ✅ PiKVM (10.10.10.14) - KVM-over-IP for Proxmox remote management (pikvm.ratlm.com)
-- ✅ Wazuh IDS Detection - 100% coverage (ALARM_INTEL + ALARM_BRO_NOTICE JSON/text)
-- ✅ Wazuh Geo-Visualization - Geographic attack origin tracking with OpenStreetMap (https://10.10.10.40:443)
-- ✅ XDA→Discord Monitoring - Hourly posts with duplicate detection (10.10.10.52)
-- ✅ Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS working
-- ✅ Checkmk (10.10.10.5) - Enterprise monitoring (Tier 1 integration in progress)
-- ✅ Calibre-Web (10.10.10.44) - Ebook management system with Zeus NFS mount at /mnt/ebooks
+- Technitium HA DNS - Primary 10.10.10.22 + Backup on Zeus 10.10.10.2
+- PiKVM (10.10.10.14) - KVM-over-IP for Proxmox (pikvm.ratlm.com)
+- Wazuh IDS Detection - 100% coverage with Geo-Visualization
+- Nginx Proxy Manager (10.10.10.3) - All reverse proxy and SSL/TLS
+- Checkmk (10.10.10.5) - Enterprise monitoring
+- Calibre-Web (10.10.10.44) - Ebook management
 
 ### Deprecated Services
-- ⛔ Pi-hole DNS (10.10.10.22 primary, 10.10.10.25 secondary) - **Replaced by Technitium DNS**
-- ⛔ BIND9 Primary (10.10.10.4) - **Replaced by Technitium DNS**
+- Pi-hole DNS (replaced by Technitium)
+- BIND9 Primary (replaced by Technitium)
 
 ### Known Issues
-- Wazuh firewall alert workflow not posting to Discord (n8n workflow broken - not critical)
-- n8n.ratlm.com showing Google Safe Browsing warning (false positive report submitted)
+- Wazuh firewall alert workflow not posting to Discord (n8n broken - not critical)
+- n8n.ratlm.com showing Google Safe Browsing warning (false positive)
+
+---
 
 ## Quick Navigation
 
-### I want to...
-| Task | Document | Section |
-|------|----------|---------|
-| Run production scripts | [`docs/SCRIPTS.md`](docs/SCRIPTS.md) | Quick Start |
-| Understand code architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code Architecture |
-| Add or modify scripts | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Common Development Tasks |
-| Perform infrastructure operations | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Task-specific procedures |
-| Debug or troubleshoot issues | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Diagnostics & Fixes |
-| Follow code/doc standards | [`docs/STYLE.md`](docs/STYLE.md) | Guidelines |
-| Work with Wazuh pipelines/visualizations | [`whats-next.md`](whats-next.md) | GeoIP implementation details |
-| Ask about Checkmk | (auto-activates) | `.claude/agents/Checkmk.md` |
-| Ask about DNS/networking | (auto-activates) | `.claude/agents/network_engineer.md` |
-| Ask about Ansible | (auto-activates) | `.claude/agents/ansible.md` |
+| Task | Document |
+|------|----------|
+| Run production scripts | [`docs/SCRIPTS.md`](docs/SCRIPTS.md) |
+| Understand code architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Add or modify scripts | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
+| Perform infrastructure operations | [`docs/OPERATIONS.md`](docs/OPERATIONS.md) |
+| Debug or troubleshoot issues | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) |
+| Follow code/doc standards | [`docs/STYLE.md`](docs/STYLE.md) |
+| **Skills & agents documentation** | [`docs/SKILLS-REGISTRY.md`](docs/SKILLS-REGISTRY.md) |
 
-## Specialized Agents (Auto-Activate)
-
-These agents activate automatically when relevant questions are asked:
-- **`Checkmk.md`** - Checkmk monitoring, alerts, APIs, checks
-- **`network_engineer.md`** - DNS (Technitium), networking infrastructure, Pi-hole/BIND9 legacy reference
-- **`ansible.md`** - Ansible automation, infrastructure-as-code, playbooks
-
-No manual activation needed - just ask questions about these topics.
+---
 
 ## Key Infrastructure Reference
 
 ### Most-Used Commands
+
 | Task | Command |
 |------|---------|
 | Validate script syntax | `bash -n script.sh` |
 | Check Checkmk version | `sudo su - monitoring -c 'omd version'` |
 | Test host connectivity | `ssh brian@<host> 'echo ok'` |
-| Test DNS resolution (Technitium Primary) | `dig @10.10.10.22 hostname.lan +short` |
-| Test DNS resolution (Technitium Backup) | `dig @10.10.10.2 hostname.lan +short` |
+| Test DNS (Primary) | `dig @10.10.10.22 hostname.lan +short` |
+| Test DNS (Backup) | `dig @10.10.10.2 hostname.lan +short` |
 | Force service discovery | `sudo su - monitoring -c 'cmk -I <hostname>'` |
-| Check agent version (Debian) | `ssh brian@<host> 'dpkg -l \| grep check-mk-agent'` |
-| View Checkmk logs | `tail /tmp/checkmk_upgrade_*.log` |
-| Access Technitium Primary | `http://10.10.10.22:5380` (web interface) |
-| Access Technitium Backup (Zeus) | `http://10.10.10.2:5380` (web interface) |
-| Check backup exists | `ls -la /tmp/checkmk_upgrade_backups/` |
-| Test NPM service | `curl -I https://checkmk.ratlm.com` |
+| Access Technitium Primary | `http://10.10.10.22:5380` |
+| Access Wazuh Dashboard | `https://10.10.10.40:443` |
 | Access Wazuh Manager (LXC 112) | `ssh brian@10.10.10.17 'sudo pct exec 112 -- <command>'` |
-| Query Wazuh Indexer API | `curl -k -u admin:<password> https://localhost:9200/<endpoint>` (from within LXC 112) |
-| View recent Wazuh alerts | `ssh brian@10.10.10.17 'sudo pct exec 112 -- tail -50 /var/ossec/logs/alerts/alerts.json'` |
-| Access Wazuh Dashboard | https://10.10.10.40:443 (admin / wO+YkeYMcx1I9?9cvHSjis+awMs2XU2H) |
-| Restart Wazuh Dashboard | `ssh brian@10.10.10.17 'sudo pct exec 112 -- systemctl restart wazuh-dashboard'` |
-| Access Calibre-Web | http://10.10.10.44:8083 (will be proxied via NPM later with calibre-web.ratlm.com) |
-| Restart Calibre-Web | `ssh brian@10.10.10.17 'sudo pct exec 121 -- systemctl restart calibre-web'` |
-| Check Calibre-Web logs | `ssh brian@10.10.10.17 'sudo pct exec 121 -- tail -50 /opt/calibre-web/calibre-web.log'` |
-| Ebook library path (container) | `/mnt/ebooks` (NFS mounted from Zeus 10.10.10.2:/volume1/ebooks) |
 
-### Checkmk Authentication & API Credentials
+### Infrastructure Components
 
-**⚠️ CRITICAL: These credentials are for API automation. Keep secure and treat like passwords.**
+| Service | IP | Purpose |
+|---------|-----|---------|
+| Firewalla | 10.10.10.1 | Gateway/Firewall/IDS |
+| Zeus | 10.10.10.2 | Synology NAS, Technitium Backup |
+| Nginx Proxy Manager | 10.10.10.3 | Reverse proxy |
+| Checkmk | 10.10.10.5 | Monitoring |
+| Home Assistant | 10.10.10.6 | Home automation |
+| PiKVM | 10.10.10.14 | KVM-over-IP |
+| Proxmox | 10.10.10.17 | Hypervisor |
+| Technitium DNS Primary | 10.10.10.22 | DNS (LXC) |
+| Wazuh | 10.10.10.40 | Security monitoring (LXC 112) |
+| Calibre-Web | 10.10.10.44 | Ebook management (LXC 121) |
 
-#### Automation User (General API Access)
-- **Username:** `automation`
-- **API Secret:** `%*URahF3Q6dul6sd`
-- **Secret File:** `/omd/sites/monitoring/var/check_mk/web/automation/automation.secret`
-- **Role:** `admin` (full permissions)
-- **Use For:** REST API calls, host management, service discovery, general Checkmk automation
-- **Authentication:** Bearer token or HTTP Basic Auth
-- **Server:** 10.10.10.5
-- **Site:** monitoring
-- **API URL:** `http://10.10.10.5/monitoring/check_mk/api/1.0/`
+---
 
-**Example Usage (curl):**
-```bash
-# Bearer token method
-curl -X GET "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
-  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
-  -H "Accept: application/json"
+## Available Skills & Agents
 
-# HTTP Basic Auth method
-curl -X GET "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
-  -H "Authorization: Basic YXV0b21hdGlvbjolKlVSYWhGM1E2ZHVsNnNk" \
-  -H "Accept: application/json"
-```
+Skills and agents auto-activate when relevant topics are mentioned.
 
-#### Agent Registration User (Agent Enrollment Only)
-- **Username:** `agent_registration`
-- **API Secret:** `NP6zomCvrmfRY04wPWpZucWLb/sHqnOr`
-- **Secret File:** `/omd/sites/monitoring/var/check_mk/web/agent_registration/automation.secret`
-- **Role:** `agent_registration` (restricted to agent registration only)
-- **Use For:** Agent registration/enrollment, agent controller registration
-- **Authentication:** Bearer token or HTTP Basic Auth
-- **Server:** 10.10.10.5
-- **Site:** monitoring
+### Project Skills (`.claude/skills/`)
+- **`checkmk/`** - Checkmk 2.4 expertise with workflows, safety checks, troubleshooting
+- **`frontend-design/`** - Beautiful UI design (avoids AI slop aesthetics)
+- **`n8n.md`** - n8n workflow automation
 
-**Example Usage (Ansible):**
-```bash
-# For agent deployment with API calls
-export CHECKMK_SERVER="10.10.10.5"
-export CHECKMK_SITE="monitoring"
-export CHECKMK_AUTOMATION_USER="automation"
-export CHECKMK_AUTOMATION_SECRET="%*URahF3Q6dul6sd"
-```
+### Project Agents (`.claude/agents/`)
+- **`Checkmk.md`** - Monitoring questions (prefer the skill for comprehensive guidance)
+- **`network_engineer.md`** - DNS, Technitium, networking
+- **`ansible.md`** - Ansible automation
+- **`brutal-critic.md`** - Harsh technical critique
+- **`black-friday-shopper.md`** - Deal hunting and shopping
+- **`session_closer.md`** - Session wrap-up
 
-**Example Usage (Agent Registration):**
-```bash
-# Register agent with server
-cmk-agent-ctl register \
-  --hostname myhost \
-  --server 10.10.10.5 \
-  --site monitoring \
-  --user agent_registration \
-  --password "NP6zomCvrmfRY04wPWpZucWLb/sHqnOr" \
-  --trust-cert
-```
+### Global Skills (`~/.claude/skills/`)
+- **`senior-it-director/`** - Model selection, strategic decisions
+- **`wellness/`** - Health, fitness, nutrition
+- **`growth/`** - Learning, habits, goals
+- **`reflection/`** - Reviews, introspection
+- **`create-agent-skills/`** - Build new skills
+- **`debug-like-expert/`** - Systematic debugging
 
-#### REST API Examples
+> **Full documentation:** See [`docs/SKILLS-REGISTRY.md`](docs/SKILLS-REGISTRY.md) for detailed skill/agent usage.
 
-**List all hosts:**
-```bash
-curl -s -H "Authorization: Bearer %*URahF3Q6dul6sd" \
-  "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" | jq .
-```
-
-**Add a new host:**
-```bash
-curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts" \
-  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "host_name": "myhost",
-    "folder": "/",
-    "attributes": {
-      "ipaddress": "10.10.10.100"
-    }
-  }'
-```
-
-**Discover services on host:**
-```bash
-curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/hosts/myhost/actions/discover_services/invoke" \
-  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
-  -H "Content-Type: application/json" \
-  -d '{"mode": "new"}'
-```
-
-**Activate changes:**
-```bash
-curl -X POST "http://10.10.10.5/monitoring/check_mk/api/1.0/activate_changes" \
-  -H "Authorization: Bearer %*URahF3Q6dul6sd" \
-  -H "Content-Type: application/json" \
-  -d '{"redirect": false, "sites": ["monitoring"]}'
-```
-
-#### Configuration File Locations
-- **User passwords:** `/omd/sites/monitoring/etc/htpasswd` (bcrypt hashes)
-- **Automation secret:** `/omd/sites/monitoring/var/check_mk/web/automation/automation.secret`
-- **Agent registration secret:** `/omd/sites/monitoring/var/check_mk/web/agent_registration/automation.secret`
-- **Host configuration:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk`
-- **User definitions:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/contacts.mk`
-- **Rules configuration:** `/omd/sites/monitoring/etc/check_mk/conf.d/wato/rules.mk`
-
-#### Technitium DNS Monitoring (Consolidated to Zeus)
-- **Note (2025-12-29):** dns02 (Technitium DNS Backup) was consolidated into zeus monitoring
-- **Reason:** Both share IP 10.10.10.2; Zeus agent detects Technitium DNS container via systemd monitoring
-- **Technitium Primary (dns01):** 10.10.10.22 (LXC 118 on Proxmox) - Monitored with cmk-agent v2.4.0p15
-- **Technitium Backup:** Running as Docker container on Zeus - Monitored via Zeus agent systemd_units section
-- **Container Detection:** Checkmk's agent sees: `/usr/bin/dotnet /opt/technitium/dns/DnsServerApp.dll /etc/dns`
-- **Result:** Single host (zeus) monitors both Technitium instances + full system metrics
-
-### Infrastructure Components Summary
-- **Firewalla**: 10.10.10.1 (IDS/Threat Intel)
-- **Zeus**: 10.10.10.2 (Synology NAS - centralized storage for ebooks, backups, media; Technitium DNS Backup container)
-- **Nginx Proxy Manager**: 10.10.10.3
-- **Checkmk**: 10.10.10.5 (monitoring site)
-- **Home Assistant**: 10.10.10.6
-- **PiKVM**: 10.10.10.14 (KVM-over-IP - pikvm.ratlm.com)
-- **Proxmox**: 10.10.10.17 (hypervisor)
-- **Technitium DNS Primary**: 10.10.10.22 (Proxmox LXC) - HA configuration
-- **Technitium DNS Backup**: Zeus 10.10.10.2 (container) - HA configuration
-- **Wazuh Manager & Dashboard**: LXC 112 on 10.10.10.17 (Proxmox) - Dashboard at https://10.10.10.40:443
-- **Wazuh Indexer**: LXC 112 - OpenSearch backend at https://localhost:9200 (internal to LXC)
-- **Calibre-Web**: CT 121 on 10.10.10.44 (LXC) - Ebook management at http://10.10.10.44:8083 (access via NPM later)
+---
 
 ## Documentation Files
 
-All detailed information is organized into topic-specific files in the `docs/` directory:
-
-- **[docs/SCRIPTS.md](docs/SCRIPTS.md)** - Production script reference and quick start
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Code design patterns and infrastructure details
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Adding/modifying scripts and development tasks
-- **[docs/OPERATIONS.md](docs/OPERATIONS.md)** - Infrastructure tasks and operational procedures
-- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Debugging scripts and diagnostics
-- **[docs/STYLE.md](docs/STYLE.md)** - Code standards, documentation guidelines, and security practices
-
-## Quick Reference Guide
-
-Use this when you need to find information fast:
-
-1. **Quick reference?** → Start with **[CLAUDE.md](CLAUDE.md)**
-2. **Running scripts?** → See **[docs/SCRIPTS.md](docs/SCRIPTS.md)**
-3. **Adding/modifying code?** → See **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**
-4. **Doing infrastructure work?** → See **[docs/OPERATIONS.md](docs/OPERATIONS.md)**
-5. **Something broke?** → See **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)**
-6. **Need to know standards?** → See **[docs/STYLE.md](docs/STYLE.md)**
-7. **Understanding the design?** → See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
-
-## Available Agents
-
-The following specialized agents are available and will auto-activate when relevant:
-
-### Project-Specific Agents (`.claude/agents/` in this repository)
-- **`Checkmk.md`** - Checkmk monitoring, alerts, APIs, checks (auto-activates on Checkmk questions)
-  - **✨ NEW:** Use the **Checkmk Expert Skill** (`./.claude/skills/checkmk/`) instead - comprehensive domain expertise with research protocols, safety checks, and systematic troubleshooting
-- **`network_engineer.md`** - DNS, BIND9, Pi-hole, networking (auto-activates on network questions)
-- **`ansible.md`** - Ansible automation, infrastructure-as-code (auto-activates on Ansible questions)
-- **`black-friday-shopper.md`** - Deal hunting and gift recommendations with price comparison across retailers
-- **`brutal-critic.md`** - Ruthless technical critique with framework-based feedback
-- **`session_closer.md`** - Session management for wrapping up work sessions
-
-### Project-Specific Skills (`./.claude/skills/`)
-- **`checkmk/`** - Comprehensive Checkmk 2.4.0p15 expertise with 7 workflows, research protocols, safety checks, troubleshooting methodology, and extensive reference materials (see Custom Prompts and Skills Registry below)
-
-### Global Agents (`~/.claude/agents/`)
-- **`Python-Instructor.md`** - Python advice, tips, and best practices (auto-activates on Python questions)
-- **`youtube_transcript_extractor.md`** - Extract detailed technical transcripts from YouTube videos and save to Obsidian (auto-activates when extracting YouTube content)
-
-## Custom Prompts and Skills Registry
-
-This section documents all custom prompts, agents, and skills created for this repository. Use this as a reference when you need specialized functionality.
-
-### Checkmk Expert Skill
-
-**File:** `./.claude/skills/checkmk/`
-
-**Purpose:** Comprehensive Checkmk 2.4.0p15 domain expertise with mandatory research protocols, safety checks, and systematic troubleshooting. Prevents configuration failures and ensures all actions are grounded in official documentation.
-
-**When to Use:**
-- Adding or managing Checkmk hosts (new host, modify IP, remove host)
-- Troubleshooting monitoring issues (host not visible, services missing, agent problems)
-- Configuring services and monitoring rules (service discovery, check parameters, alerts)
-- Using REST API for automation (add hosts, discover services, activate changes)
-- Fixing configuration problems (WATO sync issues, plugin errors, activation failures)
-- Learning Checkmk concepts (architecture, workflows, how monitoring works)
-
-**How to Activate:**
-Just mention any Checkmk task or question:
-- "Add dns01 host to Checkmk monitoring"
-- "Fix services not being discovered"
-- "Troubleshoot agent connectivity issue"
-- "Explain how Checkmk monitoring works"
-- "Automate host addition via REST API"
-
-**What It Does:**
-- Routes to appropriate workflow based on your task (7 comprehensive workflows)
-- Enforces research-first protocol: consults docs.checkmk.com and GitHub docs before any action
-- Provides step-by-step procedures with built-in safety checks
-- Includes diagnostic methodology for systematic troubleshooting
-- Provides reference materials on configuration files, errors, architecture
-- Prevents repeat of past failures (2025-12-12 plugin incompatibility, dns01 struggles)
-- Requires evidence-based verification (not just assumptions)
-
-**Workflows Included:**
-1. **add-host.md** - Step-by-step: add new host with agent installation and service discovery
-2. **manage-host.md** - Modify existing host or remove from monitoring
-3. **troubleshoot.md** - Systematic diagnostic methodology for issues
-4. **manage-services.md** - Service discovery, monitoring rules, alert configuration
-5. **use-rest-api.md** - REST API operations with Python examples
-6. **fix-configuration.md** - Configuration issues, activation failures, WATO sync
-7. **learn-checkmk.md** - Understand Checkmk concepts and architecture
-
-**Reference Materials Included:**
-- **checkmk-api-guide.md** - Complete REST API reference with examples
-- **configuration-file-formats.md** - hosts.mk, rules.mk, contacts.mk syntax and structure
-- **error-diagnosis.md** - Common error messages and their meanings
-- **common-issues.md** - Frequent problems with solutions
-- **checkmk-architecture.md** - System design, data flow, components
-
-**Key Features:**
-- ✅ Research-first: Always consults official Checkmk documentation before action
-- ✅ Safety checks: Mandatory validation before configuration changes
-- ✅ Systematic troubleshooting: Diagnostic procedures instead of blind fixes
-- ✅ Evidence-based: Requires proof that fixes actually work
-- ✅ Version-aware: 2.4.0p15 specific guidance
-- ✅ Escalation path: Clear when to ask for help instead of guessing
-- ✅ Lesson-learned: Prevents past failures (deprecated plugins, WATO sync, verification issues)
-
-**Example Usage:**
-
-User: "Add a new host called 'monitoring-backup' with IP 10.10.10.52 to Checkmk"
-
-Skill response: Routes to **workflows/add-host.md**
-1. Research requirements for 2.4.0p15 host addition
-2. Check agent compatibility and installation method
-3. Gather host details (hostname, IP, network connectivity)
-4. Install agent on target host
-5. Configure in Checkmk hosts.mk
-6. Validate syntax before activation
-7. Run service discovery
-8. Verify with actual evidence (cmk --check, service list)
-
-User: "Services not being discovered on dns01"
-
-Skill response: Routes to **workflows/troubleshoot.md**
-1. Identify exact problem: Is host visible? Is agent responding?
-2. Diagnose systematically: Network → Agent → Configuration → Plugin
-3. Research in docs.checkmk.com for your version
-4. Make one change at a time
-5. Verify with evidence before proceeding
-
-**Important Server Details (Pre-loaded):**
-- Checkmk server: 10.10.10.5
-- Site: monitoring
-- Version: 2.4.0p15
-- API user: automation
-- API secret: %*URahF3Q6dul6sd
-- Config files: /omd/sites/monitoring/etc/check_mk/conf.d/wato/
-
-**Related Documentation:**
-- Full README: `./.claude/skills/checkmk/README.md`
-- Official Docs: https://docs.checkmk.com/2.4.0p15/en/
-- GitHub Docs: https://github.com/Checkmk/checkmk-docs
-- REST API: https://docs.checkmk.com/2.4.0p15/en/rest_api.html
+| File | Purpose |
+|------|---------|
+| [`docs/SCRIPTS.md`](docs/SCRIPTS.md) | Production script reference |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code design patterns |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Development tasks |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Operational procedures |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Debugging and diagnostics |
+| [`docs/STYLE.md`](docs/STYLE.md) | Code standards |
+| [`docs/SKILLS-REGISTRY.md`](docs/SKILLS-REGISTRY.md) | Skills & agents documentation |
 
 ---
 
-### YouTube Transcript Extraction
-
-**File:** `~/.claude/agents/youtube_transcript_extractor.md`
-
-**Purpose:** Extract detailed technical transcripts from YouTube videos with full command documentation and save them to Obsidian notebook.
-
-**When to Use:**
-- You want to preserve video content about technical topics
-- You need to extract commands, examples, or procedures from a video
-- You want reproducible steps from a tutorial formatted for your Obsidian vault
-
-**How to Activate:**
-Just ask something like:
-- "Extract the transcript from this YouTube video: [URL]"
-- "Grab the detailed transcript and save it to Obsidian: [URL]"
-- "Create a technical transcript guide from: [URL]"
-
-**What It Does:**
-- Extracts complete transcript with timestamps
-- Identifies and documents all commands with exact syntax
-- Captures examples with input/output
-- Documents prerequisites and tool versions
-- Creates reproducible step-by-step procedures
-- Saves formatted markdown to `/home/brian/Documents/Notes/`
-
-**Output Format:**
-- Video metadata (title, channel, date, duration)
-- Overview of main topics
-- Prerequisites section
-- Commands and examples with explanations
-- Step-by-step procedures
-- Best practices and troubleshooting
-- Related commands and references
-- Proper markdown with code blocks (language-specific)
-
----
-
-### Brutal Critic
-
-**File:** `.claude/agents/brutal-critic.md`
-
-**Purpose:** Ruthlessly critique scripts, code, outlines, ideas, and technical work with intentionally harsh, framework-focused feedback that exposes weaknesses and forces better decisions.
-
-**When to Use:**
-- You want to **tear apart a script** before it goes to production
-- You need **honest feedback on an outline** before writing documentation
-- You want to **validate architectural decisions** (or expose them as wrong)
-- You need someone to **call out lazy thinking** or dangerous shortcuts
-- You're **designing a new process** and want it bulletproofed before rollout
-- You want **framework-based feedback** grounded in industry standards and best practices
-
-**How to Activate:**
-Just ask something like:
-- "Brutal critic: review this script"
-- "Give me brutal criticism on this approach"
-- "Tear apart this outline - what's wrong with it?"
-- "Brutal critic mode: is this a good way to handle X?"
-- "Critique this design - don't hold back"
-
-**What It Does:**
-- Analyzes work through 7 critical frameworks (Pattern Matching, Risk Assessment, Maintainability, Scalability, Security, Efficiency, Clarity)
-- Identifies specific issues and their consequences
-- Compares against industry standards and best practices
-- Forces examination of assumptions and failure modes
-- Provides concrete recommendations for improvement
-- Grades the work with honest assessment
-
-**Analysis Framework:**
-1. **Pattern Matching** - Does this follow best practices?
-2. **Risk Assessment** - What breaks and what's the blast radius?
-3. **Maintainability** - Can someone else understand this?
-4. **Scalability** - Does this design scale?
-5. **Security & Safety** - What's exposed or unsafe?
-6. **Efficiency** - Is this the simplest solution?
-7. **Documentation & Clarity** - Is the intention clear?
-
-**Output Format:**
-- **The Verdict** - One-line core problem summary
-- **What's Actually Wrong** - Specific issues identified
-- **Why This Matters** - Impact and consequences
-- **What You Should Do Instead** - Concrete recommendations
-- **Questions You Didn't Ask** - Holes in your thinking
-- **Grade** - F/D/C/B/A rating with reasoning
-
-**Key Characteristics:**
-- Harsh about the work, never about the person
-- Always provides path forward (criticism + solutions)
-- Compares against proven standards and frameworks
-- Questions assumptions without accepting excuses
-- Acknowledges genuinely good work
-- Refuses to sugarcoat obvious problems
-
----
-
-### Black Friday Shopper
-
-**File:** `.claude/agents/black-friday-shopper.md`
-
-**Purpose:** Comprehensive deal-hunting and gift recommendation agent that finds the best prices across major retailers for family members with tracked interests and budgets.
-
-**When to Use:**
-- Black Friday / Cyber Monday shopping season
-- Christmas gift planning and research
-- Birthday gifts throughout the year
-- Product research and price comparison
-- Finding alternatives within specific budgets
-- Comparing products across multiple retailers
-
-**How to Activate:**
-Just ask something like:
-- "Find Black Friday deals for my family"
-- "Research gaming laptops for my 10-year-old under $1000"
-- "Find the best deals on mini PCs with high RAM"
-- "Compare coffee machines for my wife"
-- "What are good gifts for a 12-year-old who likes Minecraft and fishing?"
-
-**What It Does:**
-- Searches major retailers (Amazon, Best Buy, Walmart, Target, Newegg, etc.)
-- Compares prices across 3+ sources for each product
-- Verifies deal authenticity (checks if discount is genuine)
-- Researches product reviews and ratings from expert sources
-- Generates tiered recommendations (Best Value, Budget, Premium)
-- Provides creative gift alternatives
-- Calculates total cost including accessories
-- Advises on deal timing (buy now vs. wait)
-- Tracks price history and trends when possible
-
-**Family Profile:**
-- **12-year-old son:** Roblox/Minecraft gaming, fishing, potential bike interest
-- **10-year-old son:** Gaming laptop (primary request), gaming peripherals
-- **Wife:** Coffee equipment, slippers, blankets, comfort items
-- **User:** Mini PC with AMD Ryzen AI Max+ 395 CPU, 128GB RAM, under $2500 budget
-
-**Research Methodology:**
-1. Searches 7+ products per family member
-2. Price comparison across 3+ retailers per product
-3. Reviews from Wirecutter, RTINGS, Tom's Hardware, Reddit
-4. Deal verification via CamelCamelCamel, Slickdeals
-5. Checks for coupon codes and cashback offers
-6. Evaluates shipping times and return policies
-
-**Output Format:**
-- Top Pick with full specs, pricing, and reasoning
-- Best Value option (budget-friendly)
-- Premium Choice (if budget allows)
-- Creative gift ideas
-- Products to avoid (with reasons)
-- Price comparison tables
-- Action items with deal expiration dates
-
-**Reusability:**
-Agent adapts to any shopping season and can be reused for:
-- Holiday shopping (Black Friday, Christmas, Prime Day)
-- Birthday gifts
-- Back-to-school shopping
-- General product research
-- Budget-conscious purchasing decisions
-
-Simply specify who you're shopping for, budget, and timeline - the agent will search current deals and pricing.
-
----
-
-## How to Add New Prompts/Skills
-
-When creating new custom prompts, agents, or skills:
-
-1. **Create the file** in appropriate location:
-   - Project-specific agents: `.claude/agents/agent-name.md`
-   - Global agents: `~/.claude/agents/agent-name.md`
-   - Skills: Follow MCP server conventions
-
-2. **Add to CLAUDE.md** immediately under "Custom Prompts and Skills Registry":
-   - Include filename/location
-   - Describe purpose and use cases
-   - Explain how to activate it
-   - Detail what it does
-   - Show example usage
-   - Note any output locations or special behaviors
-
-3. **Follow this template:**
-   ```markdown
-   ### Feature Name
-
-   **File:** location/filename.md
-
-   **Purpose:** One-line description
-
-   **When to Use:**
-   - Use case 1
-   - Use case 2
-
-   **How to Activate:**
-   Example command or trigger
-
-   **What It Does:**
-   - Bullet point 1
-   - Bullet point 2
-
-   **Output Format:**
-   - Details about output
-   - File locations
-   - Format specifications
-   ```
-
-4. **Commit with message:**
-   ```
-   FEAT: Add [feature name] prompt/skill
-
-   Description of what it does and when to use it.
-   ```
-
-This ensures nothing is forgotten and you always have a reference guide!
+*Updated: 2026-01-01*
